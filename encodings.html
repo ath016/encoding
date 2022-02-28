@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>encoding</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<style>
+		body{
+			width: 80%;
+			margin: auto;
+			padding: 0px;
+			background-color: #FFF8EC;
+		}
+		
+		.form-group{
+			padding: 10px;
+			margin: 20px 0px;
+			width: 100%;
+			background-color: white;
+			border-radius: 5px;
+			box-shadow: 0 0 3em rgba(0, 0, 0, .15);
+			box-sizing: border-box;
+		}
+		
+		.message, .key, .selector, .encrypt, .output{
+			font: normal 16px Courier New;
+			line-height: 24px;
+		}
+		
+		.message, .key, .selector, .encrypt, hr{
+			background-color: #FFF8EC;
+			border: 1px solid #DFE0DF;
+			border-radius: 5px;
+			margin: 0px;
+		}
+		
+		.message, .key{
+			width: 100%;
+			padding:10px;
+			box-sizing: border-box;
+		}
+		
+		.selector, .encrypt{
+			height: 32px;
+			padding: 5px;
+			vertical-align: middle;
+		}
+		
+		.selector:hover, .encrypt:hover{
+			cursor: pointer;
+		}
+		
+		label, a{
+			font: normal 24px Courier New;
+			color: #FFB118;
+		}
+		
+		@media(max-width:600px){
+			body{width: 100%;}
+		}
+	</style>
+</head>
+<body>
+	<div class="form-group">
+		<label>Message: </label>
+		<textarea class="message" id="message">The quick brown fox jumped over the lazy dog.</textarea>
+	</div>
+
+	<div class="form-group">
+		<label>Number(s) or Key: </label>
+		<input class="key" type="text" id="key">
+	</div>
+
+	<div class="form-group">
+		<label>Selector: </label>
+		<select class="selector" id='select'>
+			<option value='align'>align</option>
+			<option value='ark'>ark</option>
+			<option value='barcode'>barcode</option>
+			<!--<option value='binary'>binary</option> -->
+			<option value='braille'>braille</option>
+			<option value='caesar shift'>caesar shift</option>
+			<option value='capitalization'>capitalization</option>
+			<option value='clock'>clock</option>
+			<option value='embed'>embed</option>
+			<option value='equation'>equation</option>
+			<option value='every number'>every number</option>
+			<option value='geometric angle'>geometric angle</option>
+			<option value='heart beat'>heart beat</option>
+			<option value='hearts and spades'>hearts and spades</option>
+			<option value='icon path'>icon path</option>
+			<option value='keyboard'>keyboard</option>
+			<option value='keyboard finger'>keyboard finger</option>
+			<option value='keypad'>keypad</option>
+			<option value='knit and pearl'>knit and pearl</option>
+			<option value='later'>later</option>
+			<option value='layers'>layers</option>
+			<option value='letter swap'>letter swap</option>
+			<option value='math shift'>math shift</option>
+			<option value='maze'>maze</option>
+			<option value='maze round'>maze round</option>
+			<option value='morse bold'>morse bold</option>
+			<option value='morse break'>morse break</option>
+			<option value='morse odd even'>morse odd even</option>
+			<option value='morse toggle'>morse toggle</option>
+			<option value='music note'>music note</option>
+			<option value='nsew'>north south east west</option>
+			<option value='numbers'>numbers</option>
+			<option value='periodic table'>periodic table</option>
+			<option value='pyramid'>pyramid</option>
+			<option value='qwerty'>qwerty</option>
+			<option value='realign'>realign</option>
+			<option value='reverse alphabet'>reverse alphabet</option>
+			<option value='roller coaster'>roller coaster</option>
+			<option value='roygbiv'>roygbiv</option>
+			<option value='scramble'>scramble</option>
+			<option value='seismograph'>seismograph</option>
+			<option value='semaphore circle'>semaphore circle</option>
+			<!--<option value='semaphore ring 2'>semaphore ring 2</option>-->
+			<option value='semaphore time'>semaphore time</option>
+			<option value='shuffle'>shuffle</option>
+			<!--<option value='sign of the cross'>sign of the cross</option>-->
+			<option value='sign of the cross 2'>sign of the cross 2</option>
+			<option value='star chart'>star chart</option>
+			<option value='take first'>take first</option>
+			<!--<option value='ternary'>ternary</option>-->
+			<option value='time table'>time table</option>
+			<option value='tp roll'>tp roll</option>
+			<option value='treasure chest'>treasure chest</option>
+			<option value='upper case'>upper case</option>
+			<option value='vertical'>vertical</option>
+			<option value='vigenere cipher'>vigenère cipher</option>
+			<option value='vigenere cipher number'>vigenère cipher number</option>
+			<option value='walk'>walk</option>
+			<option value='wall'>wall</option>
+			<option value='wheel'>wheel</option>
+			<option value='word addition'>word addition</option>
+		</select>
+
+		<input type="button" class="encrypt" onclick='handleClick()' value="Encrypt"/>
+	</div>
+
+	<div class="form-group">
+		<label>Output: </label>
+		<p class="output" type="text" id="output"/>
+	</div>
+
+	<script>
+		function enable() {
+			let options = document.getElementById('select').options;
+			let option = undefined;
+			let arr = Array(options.length).fill(0).map((v,i) => options.item(i).text);
+			
+			['binary','semaphore ring 2', 'sign of the cross', 'ternary'].forEach((x) => {
+				option = document.createElement('option');
+				option.text = x;
+				option.value = x;
+				options.add(option, arr.filter((v) => v < option.value).length);
+				arr = Array(options.length).fill(0).map((v,i) => options.item(i).text);
+			}); // end of for each
+		} // end of enable
+		
+		async function handleClick() {
+			let dict = {
+				'align': align,
+				'ark': ark,
+				'barcode': barcode,
+				'binary': binary,
+				'braille': braille,
+				'caesar shift': caesarShift,
+				'capitalization': capitalization,
+				'clock': clock,
+				'embed': embed,
+				'equation': equation,
+				'every number': everyNumber,
+				'geometric angle': geometricAngle,
+				'heart beat': heartBeat,
+				'hearts and spades': heartSpade,
+				'icon path': iconPath,
+				'keyboard': keyboard,
+				'keyboard finger':keyboardFinger,
+				'keypad': keypad,
+				'knit and pearl': knitAndPearl,
+				'later': later,
+				'layers': layers,
+				'letter swap': letterSwap,
+				'math shift': mathShift,
+				'maze': maze,
+				'maze round': mazeRound,
+				'morse bold': morseBold,
+				'morse break': morseBreak,
+				'morse odd even': morseOddEven,
+				'morse toggle': morseToggle,
+				'music note': musicNote,
+				'nsew': nsew,
+				'numbers': numbers,
+				'periodic table': periodicTable,
+				'pyramid': pyramid,
+				'qwerty': qwerty,
+				'realign': realign,
+				'reverse alphabet': reverseAlphabet,
+				'roller coaster': rollerCoaster,
+				'roygbiv': roygbiv,
+				'scramble': scramble,
+				'seismograph': seismograph,
+				'semaphore circle': semaphoreCircle,
+				'semaphore ring 2': semaphoreRing,
+				'semaphore time': semaphoreTime,
+				'shuffle': shuffle,
+				'sign of the cross': signCross,
+				'sign of the cross 2': signCross2,
+				'star chart': starChart,
+				'take first': takeFirst,
+				'ternary': ternary,
+				'time table': timeTable,
+				'tp roll': tpRoll,
+				'treasure chest': treasureChest,
+				'upper case':upperCase,
+				'vertical': vertical,
+				'vigenere cipher': vigenere,
+				'vigenere cipher number': vigenereNumber,
+				'walk': walk,
+				'wall': wall,
+				'wheel': wheel,
+				'word addition': wordAddition
+			} // end of dictionary
+			
+			// execute function
+			if(dict[document.getElementById('select').value]) {
+				document.getElementById("output").innerHTML = 
+					await dict[document.getElementById('select').value](
+					document.getElementById("message").value,
+					document.getElementById("key").value);
+			} // end of if //*/
+		} // end of handle click
+		
+		async function align(message, key) {
+			let size = 1000;
+			let radius = parseInt(size * .43);
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg"' +
+				' font-family="Courier New" font-size="' +
+				size / 19 + '" height="' + size * 2 + '" width="' + size + '">';
+			let circle = '<circle cx="' + size/2 + '" cy="' + size/2 +
+				'" r="' + size * .49 + '" stroke="black" stroke-width="2" fill="none" />' +
+				'<circle cx="' + size/2 + '" cy="' + size/2 + '" r="1"' +
+				' stroke="black" stroke-width="2" fill="none" />'
+			let shuffleCircle = '<circle cx="' + size/2 + '" cy="' + size * 3/2 +
+				'" r="' + size * .40 + '" stroke="black" stroke-width="2" fill="none" />' +
+				'<circle cx="' + size/2 + '" cy="' + size * 3/2 + '" r="1"' +
+				' stroke="black" stroke-width="2" fill="none" />'
+			let arr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+			let working = arr.slice();
+			let shuffleArr = [];
+			while(working.length)
+				shuffleArr.push(working.splice(parseInt(Math.random() * working.length), 1)[0]);
+			
+			message = message
+				.toUpperCase()
+				.replace(/[^A-Z]/g, ' ')
+				.replace(/[A-Z]/g, (char) => arr[(shuffleArr.indexOf(char))]);
+			
+			arr = arr
+				.map((x,i) =>
+					[radius * Math.cos(i * 2 * Math.PI / arr.length),
+					radius * Math.sin(i * 2 * Math.PI / arr.length), x])
+				.map((x,i,a) =>
+					'<text x="' + Math.floor(x[0] + size/2) +
+					'" y="' + Math.floor(x[1] + size/2) +
+					'" transform="rotate(' + Math.floor(i / a.length * 360 + 90) +
+					' ' + Math.floor(x[0] + size/2) + ',' + Math.floor(x[1] + size/2) +
+					')" >' + x[2] +
+					'</text>')
+				.join('');
+			
+			shuffleArr = shuffleArr
+				.map((x,i) =>
+					[radius * .8 * Math.cos(i * 2 * Math.PI / shuffleArr.length),
+					radius * .8 * Math.sin(i * 2 * Math.PI / shuffleArr.length) + size, x])
+				.map((x,i,a) =>
+					'<text x="' + Math.floor(x[0] + size/2) +
+					'" y="' + Math.floor(x[1] + size/2) +
+					'" transform="rotate(' + Math.floor(i / a.length * 360 + 90) +
+					' ' + Math.floor(x[0] + size/2) + ',' + Math.floor(x[1] + size/2) +
+					')" >' + x[2] +
+					'</text>')
+				.join('');
+			
+			svg += arr + circle + shuffleArr + shuffleCircle + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = size;
+			canvas.height = size * 2;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: align</div><div>' + message +
+				'<div><hr></div><div>key:</div><div>' +
+				'<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' +
+				'</div><div><hr></div><div><i>downloads: ' + 
+				'<a href="data:image/svg+xml;base64,' + btoa(svg) +
+				'" download="align key.svg">align key.svg</a> ' +
+				'<a href="' + canvas.toDataURL("image/png") +
+				'" download="align key.png">align key.png</a>' + '</i></div>';
+		} // end of align
+		
+		function ark(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			key = key.toLowerCase().match(/[a-z]+/);
+			let encrypt = '<div>hint: Stay within the area of the ';
+			let random = 0, outter = 0, inner = 0, next = undefined;
+			
+			if(!key || new Set(key[0].split('').filter((c, i) => i > 0)).size < 2) key = ['ark'];
+			key = key[0];
+			encrypt += key.toUpperCase().split('').join('...') + '</div><div>';
+			
+			// print random
+			for(let index = 0; index < Math.floor(Math.random() * 4) + 1; index++) {
+				while((next = String.fromCharCode(Math.random() * 26 + 97)) == key[0]);
+				encrypt += next + ' ';
+			} // end of for */
+			
+			// print encrypt
+			while(outter < message.length) {
+				// print key
+				encrypt += key[0] + ' ';
+				
+				// print message
+				for(inner = 1; inner < key.length && outter < message.length;) {
+					if(message[outter] != key[inner]) {
+						random = Math.floor(Math.random() * 3) + 1;
+
+						for(let index = 0;
+								index < random && outter < message.length && message[outter] != key[inner]; index++) {
+							encrypt += message[outter] + ' ';
+							outter++;
+						} // end of for
+						
+						encrypt += key[inner] + ' ';
+						inner++;
+					} // end of if
+
+					else {
+						encrypt += key[inner] + ' ';
+						inner++;
+					} // end of else
+				} // end of for
+
+				// print rest of key
+				if(outter => message.length) {
+					for(;inner < key.length; inner++) {
+						encrypt += key[inner] + ' ';
+					} // end of for
+				} // end of if
+
+				// print random
+				for(let index = 0; index < Math.floor(Math.random() * 4) + 1; index++) {
+					while((next = String.fromCharCode(Math.random() * 26 + 97)) == key[0]);
+					encrypt += next + ' ';
+				} // end of for
+			} // end of while 
+			
+			return encrypt + '</div><div><hr></div>' +
+				'<div><i>tip: insert key for ark. key must have at lease two unique characters that does not include the first character</i></div>';
+		} // end of ark
+		
+		async function barcode(message, key) {
+			message = message.toLowerCase().match(/[a-z]+/g, '');
+			if(!message) message = [];
+			let height = 150 * message.length + 50;
+			let width = Math.max.apply(null, message.map((y) => y.split('')
+				.map((x) => x.charCodeAt() - 96)
+				.map((x) => (parseInt(x/10) + x%10) * 6 + 14)
+				.reduce((a,b) => a + b))
+				.concat(0)) + 40;
+			let start = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+					(message.length * 150 + 50) + '" width="' + width + '">';
+			let line = [' m2,-100 l0,100', ' m2,0'];
+			
+			message = message
+				.map((y) => y
+					.split('')
+					.map((x) => x.charCodeAt() - 96))
+				.map((y,j) => '<path d="M20 ' + ((j + 1) * 150) + y
+					.map((x,i) =>
+						(line[0] + line[1] + line[1]).repeat(parseInt(x/10)) +
+						line.join('').repeat(2) + line[1] +
+						(line[0] + line[1] + line[1]).repeat(x%10))
+					.join(' m4,0') + '" fill="none" stroke="black" stroke-width="4"/>')
+				.join('');
+			
+			let svg = start + message + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: numbers</div><div>' + img.outerHTML + '</div><div><hr></div>' + '<div><i>downloads: ' + 
+				'<a href="data:image/svg+xml;base64,' + btoa(svg) + '" download="barcode.svg">barcode.svg</a> ' +
+				'<a href="' + canvas.toDataURL("image/png") + '" download="barcode.png">barcode.png</a></i></div>';
+		} // end of barcode
+		
+		function binary(message, key) {
+			let arr = ['00001', '00010', '00011', '00100', '00101', '00110', '00111',
+				'01000', '01001', '01010', '01011', '01100', '01101', '01110', '01111',
+				'10000', '10001', '10010', '10011', '10100', '10101', '10110', '10111',
+				'11000', '11001', '11010'];
+			return '<div>hint: A = 00001, B = 00010, C = 00011</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of binary
+		
+		function braille(message, key) {
+			let arr = ["⠁", "⠃", "⠉", "⠙", "⠑", "⠋", "⠛", "⠓", "⠊", "⠚", "⠅", "⠇", "⠍",
+				"⠝", "⠕", "⠏", "⠟", "⠗", "⠎", "⠞", "⠥", "⠧", "⠺", "⠭", "⠽", "⠵"];
+			return '<div>hint: </div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') +
+				'</div><div><hr></div>' + '<div><i>tip: include braille key</i></div>';
+		} // end of braille
+		
+		function caesarShift(message, key) {
+			key = parseInt(key) % 26;
+			if(isNaN(key)) key = Math.floor(Math.random() * 26);
+			return '<div>hint: shift ' + key + '</div><div>' +
+				message.toLowerCase()
+					.replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => String.fromCharCode(((char.charCodeAt() - key + 7) % 26) + 97)) +
+				'</div><div><hr></div>' + '<div><i>tip: insert number for ceasar shift</i></div>';
+		} // end of caesar shift
+		
+		function capitalization(message, key) {
+			let arr = ['1000000', '0100000', '0010000', '0001000', '0000100', '0000010',
+				'0000001', '1100000', '1010000', '1001000', '1000100', '1000010', '1000001',
+				'1110000', '1101000', '1100100', '1100010', '1100001', '1111000', '1110100',
+				'1110010', '1110001', '1111100', '1111010', '1111001', '1111110']
+			return '<div>hint:</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, '').split('')
+					.map(x => arr[x.charCodeAt() - 97].split(''))
+					.map(y => y
+						 .map(x => parseInt(x))
+						 .map(x => String.fromCharCode(parseInt(Math.random() * 26) + 97 - x * 32))
+						.join(''))
+					.join(' ') + '</div>';
+		} // end of capitalization
+		
+		async function clock(message, key) {
+			const arr = [[6,38],[7,30],[6,45],[9,30],[6,53],[10,30],[0,30],[6,00],
+				[1,30],[6,08],[3,30],[6,15],[4,30],[6,23],[7,45],[9,38],
+				[7,53],[10,38],[0,15],[3,0],[0,38],[7,0],[1,38],[7,8],
+				[3,38],[7,15],[4,38],[7,23],[9,53],[10,45],[0,45],[9,0],
+				[1,45],[9,8],[3,45],[9,15],[4,45],[9,23],[0,53],[10,0],
+				[1,53],[10,8],[0,23],[4,0],[1,15],[3,8],[1,23],[4,8],
+				[3,53],[10,15],[3,23],[4,15]];
+			message = message.toLowerCase().replace(/[^a-z]/g, '').split('')
+				.map(x => arr[2 * (x.charCodeAt() - 97) + parseInt(Math.random() * 2)])
+				.map(x => [(x[0] / 6 + x[1] / 360) * Math.PI  - Math.PI / 2, x[1] / 30 * Math.PI - Math.PI / 2]);
+			key = parseInt(key);
+			if(isNaN(key) || key <= 0) key = 5;
+			const size = 100;
+			const width = size * key;
+			const height = size * Math.ceil(message.length / key);
+			
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				height + '" width="' + width + '">' + message
+					.map((x,i) => '<path d="M' + ((i % key) * size + size / 2) + ' ' +
+						(parseInt(i / key) * size + size / 2) +
+						' l' + Math.round(size * .25 * Math.cos(x[0])) + ' ' +
+						Math.round(size * .25 * Math.sin(x[0])) +
+						' l' + Math.round(size * -.25 * Math.cos(x[0])) + ' ' +
+						Math.round(size * -.25 * Math.sin(x[0])) +
+						' l' + Math.round(size * .35 * Math.cos(x[1])) + ' ' +
+						Math.round(size * .35 * Math.sin(x[1])) +
+						'" fill="none" stroke="black" stroke-width="4"/>' +
+						'<circle cx="' + ((i % key) * size + size / 2) +
+						'" cy="' + (parseInt(i / key) * size + size / 2) +
+						'" r="' + (size * .45) + '"' +
+						' stroke="black" stroke-width="2" fill="none" />')
+					.join('') + '</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint:</div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +
+				btoa(svg) + '" download="clock.svg">clock.svg</a> <a href="' +
+				canvas.toDataURL("image/png") + '" download="clock.png">clock.png</a></i></div>' +
+				'<div><hr></div><div>tip: insert number for number of clocks per row</div>';
+		} // end of clock
+		
+		function embed(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '');
+			message = (String.fromCharCode(Math.random() * 26 + 97) + message).split('');
+			for(let index = Math.floor(Math.random() * 3); index < message.length;
+					index += Math.floor(Math.random() * 3)) {
+				message[index] = message[index] + Array(Math.floor(Math.random() * 3)).fill(0)
+					.map(() => String.fromCharCode(Math.random() * 26 + 97)).join('');
+			} // end of for
+			
+			message = message.join('').split('');
+			for(let index = Math.floor(Math.random() * 3); index < message.length;
+					index += Math.floor(Math.random() * 6)) {
+				message[index] = message[index] + ' ';
+			} // end of for
+			
+			return '<div>hint: take what you need</div><div>' + message.join('') + '</div>';
+		} // end of embed
+		
+		function equation(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			key = key.toLowerCase();
+			let encrypt = '<div>hint: solve for x</div><div>';
+			let level = 5, value = undefined, accessory = undefined;
+			let trig = [
+				{'c':'cos(0)', 'v':1}, {'c':'sin(π/6)', 'v':0.5}, {'c':'cos(π/3)', 'v':0.5},
+				{'c':'sin(π/2)', 'v':1}, {'c':'cos(2π/3)', 'v':-0.5}, {'c':'sin(5π/6)', 'v':0.5},
+				{'c':'cos(π)', 'v':-1}, {'c':'sin(7π/6)', 'v':-0.5}, {'c':'cos(4π/3)', 'v':-0.5},
+				{'c':'sin(3π/2)', 'v':-1}, {'c':'cos(5π/3)', 'v':0.5}, {'c':'sin(11π/6)', 'v':-0.5}];
+			
+			if(key.match('fact')) level = 6;
+			if(key.match('trig')) level = 7;
+			
+			for(let index = 0; index < message.length; index++) {
+				value = message.charCodeAt(index) - 97 + 1;
+				accessory = Math.floor(Math.random() * 10) + 1;
+				
+				switch(Math.floor(Math.random() * level)) {
+						// addition
+					case 0:
+						encrypt += 'x + ' + accessory + ' = ' + (value + accessory) + '</div><div>';
+						continue;
+						// subtraction
+					case 1:
+						encrypt += 'x - ' + accessory + ' = ' + (value - accessory) + '</div><div>';
+						continue;
+						// multiply
+					case 2:
+						encrypt += 'x * ' + accessory + ' = ' + (value * accessory) + '</div><div>';
+						continue;
+						// quad
+					case 3:
+						encrypt += 'x<sup>2</sup> + ' + accessory + ' = ' + (value * value + accessory) + '</div><div>';
+						continue;
+						// root
+					case 4:
+						accessory = Math.floor(Math.random() * 5) + 6;
+						encrypt += '√(x + ' + (accessory * accessory - value) + ') = ' + accessory + '</div><div>';
+						continue;
+						// fractorial
+					case 5:
+						accessory = Math.floor(Math.random() * 6);
+						encrypt += 'x + ' + accessory + '! = ';
+						accessory = Array(accessory).fill(0).map((v,i) => i + 1).reduce((a,b) => a * b, 1);
+						encrypt += (value + accessory) + '</div><div>';
+						continue;
+						// trigonometric
+					case 6:
+						accessory = Math.floor(Math.random() * 12);
+						encrypt += 'x * ' + trig[accessory]['c'] + ' = ' + (value * trig[accessory]['v']) + '</div><div>'
+						continue;
+				} // end of switch
+			} // end of for
+			
+			return encrypt + '</div><div><hr></div>' +
+				'<div><i>tip: insert key for equation. \"fact\" for factorial equations. \"trig\" for factorial and trigonometric equations</i></div>';
+		} // end of equation
+		
+		function everyNumber(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			key = key.match(/\d+/g);
+			if(!key || (key = key.filter((number) => number > '1')).length < 2) key = ['3', '5'];
+			key = key.map((number) => parseInt(number));
+			
+			let encrypt = '<div>hint: take every ' + key[0] + ' and ' + key[1] +'</div><div>';
+			
+			for(let index = 0, count = 1; index < message.length; index++, count++) {
+				while(count % key[0] && count % key[1]) {
+					encrypt += String.fromCharCode(Math.random() * 26 + 97) + ' ';
+					count++;
+				} // end of while
+				
+				encrypt += message[index] + ' ';
+			} // end of for
+			
+			return encrypt + '</div><div><hr></div>' +
+				'<div><i>tip: insert numbers for every multiples of numbers taken. two numbers has to be greater then 1</i></div>';
+		} // end of every number
+		
+		async function geometricAngle(message, key) {
+			const arr = [[2,3],[2,4],[2,5],[2,6],[2,7],[0,2],[1,2],[3,4],
+				[3,5],[0,6],[3,6],[3,7],[0,3],[1,3],[4,5],[4,6],
+				[4,7],[0,4],[1,4],[5,6],[5,7],[1,6],[0,7],[1,7],
+				[0,5],[0,1]];
+			const size = 100;
+			message = message.toLowerCase().replace(/[^a-z]/g, '').split('')
+				.map(x => arr[x.charCodeAt() - 97])
+				.map(x => [x[0] / 4 * Math.PI, x[1] / 4 * Math.PI])
+				.map(x => [Math.cos(x[0]), Math.sin(x[0]), Math.cos(x[1]), Math.sin(x[1])])
+				.map(y => y.map(x => Math.round(size * .45 * x)));
+			key = parseInt(key);
+			if(isNaN(key) || key <= 0) key = 5;
+			const width = size * key;
+			const height = size * Math.ceil(message.length / key);
+			
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				height + '" width="' + width + '">' + message
+					.map((x,i) => '<path d="M' + ((i % key) * size + size / 2) + ' ' +
+						(parseInt(i / key) * size + size / 2) + ' l' +
+					 	x[0] + ' ' + x[1] + ' 0 ' + (-x[1]) + ' ' + (-x[0]) + ' 0 ' +
+					 	x[2] + ' ' + x[3] + ' 0 ' + (-x[3]) + ' ' + (-x[2]) + ' 0 ' +
+					 	'" fill="none" stroke="black" stroke-width="4"/>')
+					 .join('') + '</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint:</div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' + btoa(svg) +
+				'" download="geometric angle.svg">geometric angle.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="geometric angle.png">geometric angle.png</a></i></div>' +
+				'<div><hr></div><div>tip: insert number for number of elements in row</div>';
+		} // end of geometric angle
+		
+		async function heartBeat(message, key) {
+			const arr = ['01', '1000', '1010', '100', '0', '0010', '110', '0000', '00',
+				'0111', '101', '0100', '11', '10', '111', '0110', '1101', '010',
+				'000', '1', '001', '0001', '011', '1001', '1011', '1100'];
+			key = [[4,-12,4,12,4,0], [2,2,4,-40,4,50,4,-12,4,0], [16,0]];
+			message = message.toLowerCase().replace(/[^a-z]/g, ' ').split(' ')
+				.filter((x) => x != '')
+				.map((z) => z.split('')
+					.map((y) => arr[y.charCodeAt() - 97]
+						.split('')
+						.map((x) => key[parseInt(x)]))
+					.reduce((t,a) => t.concat(key[2]).concat(a), [])
+					.flat());
+			
+			const height = message.length * 75;
+			const width = key[2][0] + 20 + Math.max.apply(null, message
+				.map(y => y
+					.filter((x,i) => i % 2 == 0)
+					.reduce((t,a) => t + a, 0))
+				.concat(0));
+			
+			const svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				height + '" width="' + width + '">' + message
+					.map((x,i) => '<path d="M10 ' + (50 + i * 75) + ' l' +
+						(x.concat(key[2]).join(' ')) +
+						'" stroke="black" stroke-width="2" fill="none" />')
+					.join('') + '</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +  btoa(svg) +
+				'" download="heart beat.svg">heart beat.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="heart beat.png">heart beat.png</a></i></div>';
+		} // end of heart beat
+		
+		function heartSpade(message, key) {
+			let arr = ['A♠', '2♠', '3♠', '4♠', '5♠', '6♠', '7♠', '8♠', '9♠', '10♠', 'J♠',
+				'Q♠', 'K♠', 'A♥', '2♥', '3♥', '4♥', '5♥', '6♥', '7♥', '8♥', '9♥', '10♥',
+				'J♥', 'Q♥', 'K♥'];
+			return '<div>hint: P = 3♥, Q = 4♥, R = 5♥</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of heart and spade
+		
+		function iconPath(message, key) {
+			let arr = [['leaf, crucifix, cross', 'nun, bird'], ['leaf, crucifix, tape measure'],
+				['scarf, statue'], ['grape, angel, mitre'], ['leaf, rose'],
+				['leaf, crucifix, candle', 'nun, air conditioner'],
+				['nun, caliper', 'grape, heart of Jesus'], ['praying hands'], ['nun, one ton weight'],
+				['leaf, cross'], ['scarf, election, shoes'], ['grape, church'],
+				['grape, angel, married couple'], ['nun, angel'],
+				['scarf, election, cross, bible, bible'], ['grape, angel, church'],
+				['leaf, crucific, scale', 'grape, bell'], ['shepherd, cross'],
+				['leaf, body & blood'], ['grape, pope'], ['leaf, crucifix, bell'],
+				['nun, hanging scale'],
+				['grape, angel, body and blood', 'scarf, election, cross, bible, harp'],
+				['shepherd, grave'], ['scarf, election, cross, church'], ['shepherd, cup']];
+			return '<div>hint:</div><div>' + message.toLowerCase().replace(/[^a-z]/g, '')
+				.split('').map((char) => arr[char.charCodeAt() - 97])
+				.map((x) => x[Math.floor(Math.random() * x.length)])
+				.join('</div><div>') +
+				'<div><hr></div><div><i>tip: include "icon path key" handout</i></div>';
+		} // end of icon path
+		
+		function keyboard(message, key) {
+			let arr = [11, 555, 333, 33, 3, 44, 55, 66, 8, 77, 88, 99, 777,
+				666, 9, 0, 1, 4, 22, 5, 7, 444, 2, 222, 6, 111];
+			return '<div>hint: keyboard</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of keyboard
+		
+		function keyboardFinger(message, key) {
+			let arr = ['left pinkie', 'left index down right', 'left middle down',
+				'left middle', 'left middle up', 'left index', 'left index right',
+				'right index left', 'right middle up', 'right index', 'right middle',
+				'right ring', 'right index down', 'right index down left',
+				'right ring up', 'right pinkie up', 'left pinkie up', 'left index up',
+				'left ring', 'left index up right', 'right index up', 'left index down',
+				'left ring up', 'left ring down', 'right index up left', 'left pinkie down'];
+			return '<div>hint: keyboard</div>' +
+				message.toLowerCase().replace(/[^a-z]/g, '\n')
+					.replace(/[a-z]/g, (char) => '<div>' + arr[char.charCodeAt() - 97] + '</div>')
+					.replace(/\n/g, (char) => '<div>thumb</div>');
+		} // end of keyboard finger
+		
+		function keypad(message, key) {
+			let arr = [2, 22, 222, 3, 33, 333, 4, 44, 444, 5, 55, 555, 6, 66,
+				666, 7, 77, 777, 7777, 8, 88, 888, 9, 99, 999, 9999];
+			return '<div>hint: keypad</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of keypad
+		
+		function knitAndPearl(message, key) {
+			key = key.match(/\d+/g);
+			if(!key || (key = key.filter((number) => number > '0')).length < 2) key = ['2', '1'];
+			key = key.map((number) => parseInt(number));
+			return '<div>hint: take ' + key[0] + ' skip ' + key[1] + '</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, '').split('')
+					.map((x,i) => (i && i % key[0] == 0)?
+						 Array(key[1]).fill(0)
+						 	.map(() => String.fromCharCode(Math.random() * 26 + 97))
+						 	.concat(x)
+						 	.join(' '): x)
+					.join(' ') +
+				'<div><hr></div><div><i>tip: insert numbers for amount taken or skipped</i></div>';
+		} // end of knit and pearl
+		
+		async function later(message, key) {
+			message = message.toUpperCase();
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+			
+			canvas.width = message.length * 144 + 72;
+			canvas.height = 240 + 72;
+			ctx.font = '240px Menlo';
+			ctx.fillText(message, 0 + 36, 180 + 36);
+			
+			const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const data = imageData.data;
+			for (let i = 0, direction, color; i < data.length; i += 4) {
+				direction = (data[i + 3] == 0)? 1: -1;
+				color = (((i + canvas.height + (direction * Math.floor(i / canvas.width))) % 144) < 120)? 255: 0;
+				data[i] = color; // red
+				data[i + 1] = color; // green
+				data[i + 2] = color; // blue
+				data[i + 3] = 255; // alpha
+			} // end of for
+			ctx.putImageData(imageData, 0, 0);
+			
+			let image = document.createElement('img');
+			await new Promise(resolve => {
+				image.onload = () => resolve();
+				image.src = canvas.toDataURL("image/png");
+			}); // end of new promise
+			
+			return '<div>hint: </div>' + '<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' +
+				'<div><hr></div><div><i>download: <a href="' + canvas.toDataURL("image/png") +
+				'" download="vertical.png">later.png</a></i></div>';
+		} // end of handle later
+		
+		function layers(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			key = parseInt(key);
+			if(isNaN(key) || key < 1) key = 4;
+			let factors = [1,1];
+			let prime = [101, 97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2]
+			
+			message = (message.length)? message: '†';
+			let length = message.length;
+			
+			
+			prime.forEach((v) => {
+				while(length % v == 0) {
+					length /= v;
+					(factors[0] < factors[1])? factors[0] *= v: factors[1] *= v;
+				} // end of while
+			}); // end of for each
+			
+			let array = Array(factors[0]).fill(0)
+				.map(() => Array(factors[1]).fill(0)
+					.map(() => Math.floor(Math.random() * key)));
+			
+			array = Array(key).fill(0)
+				.map((o,k) => array
+					.map((n,j) => n
+						.map((m,i) => (m == k)? message[j * factors[1] + i]: '&nbsp;')
+						.join(' '))
+					.join('</div><div>'))
+				.join('<hr>');
+			
+			return '<div>hint: ' + key + ' in 1</div><div>' + array +
+				'<div><hr></div>' + '<div><i>tip: print on clear sheets of paper.' +
+				' insert number for number of layers</i></div>';
+		} // end of layers
+		
+		async function letterSwap(message, key) {
+			let size = 1000;
+			let radius = parseInt(size * .43);
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" font-family="Courier New" font-size="' +
+					size / 19 + '" height="' + size + '" width="' + size + '">';
+			let circle = '<circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + size * .49 +
+					'" stroke="black" stroke-width="2" fill="none" />';
+			let arr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+			let working = arr.slice();
+			let shuffleArr = [];
+			while(working.length)
+				shuffleArr.push(working.splice(parseInt(Math.random() * working.length), 1)[0]);
+			
+			message = message
+				.toUpperCase().replace(/[^A-Z]/g, ' ')
+				.replace(/[A-Z]/g, (char) => shuffleArr[25 - (shuffleArr.indexOf(char))]);
+			
+			arr = arr
+				.map((x,i) =>
+					[radius * Math.cos(i * 2 * Math.PI / arr.length),
+					radius * Math.sin(i * 2 * Math.PI / arr.length), x])
+				.map((x,i,a) =>
+					'<text x="' + Math.floor(x[0] + size/2) +
+					'" y="' + Math.floor(x[1] + size/2) +
+					'" transform="rotate(' + Math.floor(i / a.length * 360 + 90) +
+					' ' + Math.floor(x[0] + size/2) + ',' + Math.floor(x[1] + size/2) +
+					')" >' + x[2] +
+					'</text>')
+				.join('');
+			
+			shuffleArr = shuffleArr
+				.map((x,i,c) => [x, c[25 - i]])
+				.filter((x,i) => i < 13)
+				.map((x,i) =>
+					[size * .4 * Math.cos((x[0].charCodeAt() - 65) * 2 * Math.PI / 26 + .04),
+						size * .4 * Math.sin((x[0].charCodeAt() - 65) * 2 * Math.PI / 26 + .04),
+						size * .4 * Math.cos((x[1].charCodeAt() - 65) * 2 * Math.PI / 26 + .04),
+						size * .4 * Math.sin((x[1].charCodeAt() - 65) * 2 * Math.PI / 26 + .04)]
+					.map(x => Math.round(x) + size/2))
+				.map(x => '<path d="M' + x.slice(0, 2)
+					.join(' ') + ' L' + x.slice(2)
+					.join(' ') + '" stroke="black" stroke-width="2" fill="none"/>')
+				.join('');
+			
+			svg += arr + circle + shuffleArr + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = size;
+			canvas.height = size;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' + message +
+				'<div><hr></div><div>key:</div><div>' +
+				'<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' + '</div><div><hr></div><div><i>downloads: ' + 
+				'<a href="data:image/svg+xml;base64,' + btoa(svg) +
+				'" download="letter swap key.svg">letter swap key.svg</a> ' +
+				'<a href="' + canvas.toDataURL("image/png") +
+				'" download="letter swap key.png">letter swap key.png</a>' + '</i></div>';
+		} // end of letter swap
+		
+		function mathShift(message, key) {
+			return '<div>hint: restart at "A". count around' +
+				(' ' + message.toLowerCase().replace(/[^a-z]/g, ' ')).split('')
+					.map((x,i,a) => (x.match(/[a-z]/) && i)? (a[i - 1].match(/[a-z]/))?
+						 '+' + (x.charCodeAt() - a[i - 1].charCodeAt() + 26) % 26:
+						 x.charCodeAt() - 96: '</div><div>')
+					.join('') + '</div>';
+		} // end of math shift
+		
+		async function maze(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '').split('');
+			let width = message.length;//(message.length >> 1) + 1;
+			let size = 1000;
+			size = size - (size % (width + 2));
+			let segment = size / (width + 2);
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				size + '" width="' + size + '" font-family="Courier New" font-size="' +
+				segment + '" >' + '<path xmlns="http://www.w3.org/2000/svg" d="M' +
+				(segment * 2) + ' ' + segment +
+				' h' + (segment * (width - 1)) + ' v' + (segment * (width - 1)) +
+				'" stroke="black" stroke-width="1" fill="none"/>' +
+				'<path xmlns="http://www.w3.org/2000/svg" d="M' +
+				segment + ' ' + (segment * 2) +
+				' v' + (segment * (width - 1)) + ' h' + (segment * (width - 1)) +
+				'" stroke="black" stroke-width="1" fill="none"/>';
+			let map = new Map();
+			let stack = [];
+			let array = Array(width).fill(0)
+				.map(() => Array(width).fill(4));
+			let pair = null;
+			let path = [];
+			let vert = undefined;
+			let horiz = undefined;
+			
+			// start point
+			stack.push([width - 1, width - 1]);
+			
+			// explore maze
+			while(stack.length) {
+				pair = stack.pop();
+				map.set(pair.join(), array[pair[1]][pair[0]]);
+				
+				[0,1,2,3]
+					.sort(() => Math.random() - .5)
+					.forEach(x => {
+						let explore = [pair[0] + ((1 - x) % 2), pair[1] + ((2 - x) % 2)];
+						
+						if(0 <= explore[1] && explore[1] < width &&
+							0 <= explore[0] && explore[0] < width &&
+							!map.has(explore.join())) {
+							stack.push(explore);
+							array[explore[1]][explore[0]] = x;
+						} // end of if
+					}); // end of for each
+			} // end of while
+			
+			// start point
+			pair = [0, 0]
+			path.push(pair);
+			
+			// find path
+			while(pair.join() != [width - 1, width - 1]) {
+				pair = [pair[0] + ((array[pair[1]][pair[0]] - 1) % 2),
+					pair[1] + ((array[pair[1]][pair[0]]  - 2) % 2)];
+				path.push(pair);
+			} // end of while
+			
+			// vertical
+			vert = array
+				.map((y,j) => y
+					.map((x,i,c) => (x != 2 && (i + 1) < width && c[i + 1] != 0)? 1: 0)
+					.map((x,i) => (x)? '<path d="M' + ((i + 2) * segment) + ' ' + ((j + 1) * segment) +
+						' v' + segment + '" stroke="black" stroke-width="1" fill="none"/>': '')
+					.join(''))
+				.join('');
+			
+			// horizontal
+			horiz = array
+				.map((y,j,b) => y
+					.map((x,i) => (x != 3 && (j + 1) < width && b[j + 1][i] != 1)? 1: 0)
+					.map((x,i) => (x)? '<path d="M' + ((i + 1) * segment) + ' ' + ((j + 2) * segment) +
+						' h' + segment + '" stroke="black" stroke-width="1" fill="none"/>': '')
+					.join(''))
+				.join('');
+			
+			// message
+			while(message.length < path.length)
+				message.splice(Math.floor(Math.random() * message.length), 0, '');
+			
+			message = message
+				.map((x,i) => '<text x="' + ((path[i][0] + 1.2) * segment) +
+					'" y="' + ((path[i][1] + 1.8) * segment) + '">' + x + '</text>')
+				.join('');
+			
+			// simplify path
+			path = path.map(x => x.toString());
+			
+			// random letters
+			array = array
+				.map((y,j) => y
+					.map((x,i) => (path.indexOf([i,j].join()) == -1 && Math.random() < .15)?
+						String.fromCharCode(65 + Math.floor(Math.random() * 26)): '')
+					.map((x,i) => (x != '')? '<text x="' + Math.round((i + 1.2) * segment) +
+						'" y="' + Math.round((j + 1.8) * segment) + '">' + x + '</text>': x)
+					.join(''))
+				.join('');
+			
+			svg += vert + horiz + message + array + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = size;
+			canvas.height = size;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' +
+				'<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +
+				btoa(svg) + '" download="maze.svg">maze.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="maze.png">maze.png</a></i></div>';
+		} // end of maze
+		
+		async function mazeRound(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '').split('');
+			let width = message.length;
+			let size = 1000;
+			size = size - (size % (width + 2));
+			let segment = size / (width + 2) / 2;
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				size + '" width="' + size +
+				'" font-family="Courier New" font-size="' + segment + '">\n';
+			let map = new Map();
+			let stack = [];
+			let array = Array(width).fill(0)
+				.map((x,i) => Array(4 << Math.log2(i + 1)).fill(3));
+			let pair = null;
+			let explore = null;
+			let radial = '';
+			let circular = '';
+			
+			// start point
+			stack.push([0, 0]);
+			map.set([0, 0].join(), null);
+			array[0][0] = 1;
+			
+			// explore maze
+			while(stack.length) {
+				pair = stack.pop();
+				
+				// 0: right, 1: up, 2: left, 3: down, 4: down
+				[0,1,2,3,4]
+					.sort(() => Math.random() - .5)
+					.forEach(x => {
+						explore = null;
+						
+						// explore left
+						if(x == 0 && !map.has([pair[0], (pair[1] + array[pair[0]].length - 1) % array[pair[0]].length].join())) {
+							explore = [pair[0], (pair[1] + array[pair[0]].length - 1) % array[pair[0]].length];
+							array[pair[0]][pair[1]] -= 1;
+						} // end of if
+						
+						// explore right
+						if(x == 2 && !map.has([pair[0], (pair[1] + 1) % array[pair[0]].length].join())) {
+							explore = [pair[0], (pair[1] + 1) % array[pair[0]].length];
+							array[explore[0]][explore[1]] -= 1;
+						} // end of if
+						
+						// explore up
+						if(x == 1 && pair[0] != 0) {
+							if(array[pair[0]].length != array[pair[0] - 1].length &&
+								!map.has([pair[0] - 1, pair[1] >> 1].join())) {
+								
+								explore = [pair[0] - 1, pair[1] >> 1];
+								array[pair[0]][pair[1]] -= 2;
+							} // end of if
+							
+							if(array[pair[0]].length == array[pair[0] - 1].length &&
+								!map.has([pair[0] - 1, pair[1]].join())){
+								
+								explore = [pair[0] - 1, pair[1]];
+								array[pair[0]][pair[1]] -= 2;
+							} // end of if
+						} // end of if
+						
+						// explore down
+						if((x == 3 || x == 4) && pair[0] + 1 < array.length) {
+							if(array[pair[0]].length != array[pair[0] + 1].length &&
+								!map.has([pair[0] + 1, (pair[1] << 1) + (x & 1)].join())) {
+								
+								explore = [pair[0] + 1, (pair[1] << 1) + (x & 1)];
+								array[explore[0]][explore[1]] -= 2;
+							} // end of if
+							
+							if (array[pair[0]].length == array[pair[0] + 1].length &&
+								!map.has([pair[0] + 1, pair[1]].join())){
+								
+								explore = [pair[0] + 1, pair[1]];
+								array[explore[0]][explore[1]] -= 2;
+							} // end of if
+						} // end of if
+						
+						// explore
+						if(explore != null) {
+							stack.push(explore);
+							map.set(explore.join(), pair.join());
+						} // end of if
+					}); // end of for each
+			} // end of while
+			
+			// path start point
+			pair = [width - 1, 0].join();
+			
+			// find path
+			while(pair != null) {
+				stack.push(pair);
+				pair = map.get(pair);
+			} // end of while
+			
+			// parse path
+			stack = stack
+				.map(y => y.split(',')
+					.map(x => parseInt(x)));
+			
+			// radial
+			radial = array
+				.map((y,j) => y
+					.map((x,i,c) => (x & 1)? 1: 0)
+					.map((x,i,c) => (x)? '<path d="M' + [size/2 + (j + 1) * segment, size/2].join() +
+						' h ' + segment + ' " stroke="black" stroke-width="1" fill="none" ' +
+						'transform="rotate(' + [i/c.length * 360, size/2, size/2] + ')"/>': '')
+					.filter(x => x != '')
+					.join('\n'))
+				.join('\n') + '\n'; //*/
+			
+			// circular
+			circular = array
+				.map((y,j,b) => y
+					.map((x,i,c) => (x & 2)? (1 + j) * segment: 0)
+					.map((x,i,c) => (x)?
+						'<path d="M' + [parseInt(x * Math.cos(i/c.length * 2 * Math.PI) + size/2),
+							parseInt(x * Math.sin(i/c.length * 2 * Math.PI) + size/2)].join() +
+							' A' + [x,x].join() + ' 0 0,1 ' +
+							[parseInt(x * Math.cos((i + 1)/c.length * 2 * Math.PI) + size/2),
+							parseInt(x * Math.sin((i + 1)/c.length * 2 * Math.PI) + size/2)].join() +
+							'" stroke="black" stroke-width="1" fill="none"/>': '')
+					.filter(x => x != '')
+					.join('\n'))
+				.join('\n') + '\n' +
+				'<path d="M' + [(array.length + 1) * segment + size/2, size/2].join() +
+					' A' + [(array.length + 1) * segment, (array.length + 1) * segment].join() +
+					' 1 1,0 ' +
+					[((array.length + 1) * segment * Math.cos(1/array[array.length - 1].length * 2 * Math.PI) + size/2),
+					((array.length + 1) * segment * Math.sin(1/array[array.length - 1].length * 2 * Math.PI) + size/2)].join() +
+					'" stroke="black" stroke-width="2" fill="none"/>\n'; //*/
+			
+			// message
+			while(message.length < stack.length)
+				message.splice(Math.floor(Math.random() * message.length), 0, '');
+			
+			message = message
+				.map((x,i) => (x != '')? '<text x="' +
+					(parseInt((stack[i][0] + 1.5) * segment * Math.cos((stack[i][1] + .5)/array[stack[i][0]].length * 2 * Math.PI) + size/2 - segment * .3)) +
+					'" y="' +
+					parseInt(((stack[i][0] + 1.5) * segment * Math.sin((stack[i][1] + .5)/array[stack[i][0]].length * 2 * Math.PI) + size/2 + segment * .3)) +
+					'">' + x + '</text>': '')
+				.filter(x => x != '')
+				.join('\n') + '\n';
+			
+			// simplify stack
+			stack = stack
+				.map(x => x.join());
+			
+			// random letters
+			array = array
+				.map((y,j) => y
+					.map((x,i) => (stack.indexOf([j,i].join()) == -1 && Math.random() < .15)?
+						String.fromCharCode(65 + Math.floor(Math.random() * 26)): '')
+					.map((x,i) => (x != '')? '<text x="' +
+						parseInt(((j + 1.5) * segment * Math.cos((i + .5)/array[j].length * 2 * Math.PI) + size/2 - segment * .3)) +
+						'" y="' +
+						parseInt(((j + 1.5) * segment * Math.sin((i + .5)/array[j].length * 2 * Math.PI) + size/2 + segment * .3)) +
+						'">' + x + '</text>': x)
+					.filter(x => x != '')
+					.join('\n'))
+				.join('\n') + '\n'; //*/
+			
+			svg += radial + circular + message + array + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = size;
+			canvas.height = size;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' +
+				'<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +
+				btoa(svg) + '" download="maze.svg">maze round.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="maze.png">maze round.png</a></i></div>';
+		} // end of maze round
+
+		function morseBold(message, key) {
+			let arr = ['1<b>1</b>', '<b>1</b>3', '<b>1</b>1<b>1</b>1', '<b>1</b>2', '1',
+				'2<b>1</b>1', '<b>2</b>1', '4', '2', '1<b>3</b>', '<b>1</b>1<b>1</b>',
+				'1<b>1</b>2', '<b>2</b>', '<b>1</b>1', '<b>3</b>', '1<b>2</b>1',
+				'<b>2</b>1<b>1</b>', '1<b>1</b>1', '3', '<b>1</b>', '2<b>1</b>', '3<b>1</b>',
+				'1<b>2</b>', '<b>1</b>2<b>1</b>', '<b>1</b>1<b>2</b>', '<b>2</b>2'];
+			return '<div>hint: A = 1<b>1</b>, I = 2, M = <b>2</b></div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of morse bold
+
+		function morseBreak(message, key) {
+			let arr = ["ET/", "ET/", "NI/", "NI/", "NN/", "NN/", "TI/", "NE/", "E/", "E/", "IN/", "IN/",
+				"ME/", "TN/", "II/", "II/", "EE/", "EE/", "AM/", "AM/", "NT/", "TA/", "AI/", "AI/",
+				"TT/", "TT/", "TE/", "TE/", "MT/", "TM/", "AN/", "AN/", "MA/", "MA/", "AE/", "EN/",
+				"IE/", "EI/", "T/", "T/", "IT/", "EA/", "IA/", "IA/", "AT/", "EM/", "NA/", "NA/",
+				"NM/", "NM/", "MI", "MI"];
+			return '<div>hint: P = AN/</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[2 * (char.charCodeAt() - 97) + Math.floor(Math.random() * 2)] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of morse break
+
+		function morseOddEven(message, key) {
+			let arr = ['01', '1000', '1010', '100', '0', '0010', '110', '0000', '00',
+				'0111', '101', '0100', '11', '10', '111', '0110', '1101', '010', '000',
+				'1', '001', '0001', '011', '1001', '1011', '1100'];
+			return '<div>hint:' + ' A = ' +
+				[0,1]
+					.map((symbol) => symbol + 2 * Math.floor(Math.random() * 5))
+					.join('') + ' N = ' +
+				[1,0]
+					.map((symbol) => symbol + 2 * Math.floor(Math.random() * 5))
+					.join('') + '</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97].split('')
+						.map((v) => parseInt(v) + 2 * parseInt(Math.random() * 5))
+						.join('') + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of morse odd even
+
+		function morseToggle(message, key) {
+			let arr = [[" 01", " 11", "te"], [" 1100", " 0100", "tich"], [" 1111", " 0111", "tich"],
+				[" 110", " 010", "tich"], [" 0", " 1", "tich"], [" 0011", " 1011", "tich"],
+				[" 101", " 001", "tich"], [" 0000", " 1000", "tich"], [" 00", " 10", "tich"],
+				[" 0100", " 1100", "te"], [" 111", " 011", "te"], [" 0110"," 1110", "tich"],
+				[" 10", " 00", "te"], [" 11", " 01", "tich"], [" 100", " 000", "te"],
+				[" 0101", " 1101", "tich"], [" 1011", " 0011", "te"], [" 011", " 111", "tich"],
+				[" 000", " 100", "tich"], [" 1", " 0", "te"], [" 001", " 101", "te"],
+				[" 0001", " 1001", "te"], [" 010", " 110", "te"], [" 1101", " 0101", "te"],
+				[" 1110", " 0110", "te"], [" 0010", " 1010", "tich"]];
+			return '<div>hint: 1 = switch. 0 = same' +
+				['tich']
+					.concat((' ' + message.toLowerCase()).replace(/[^a-z]/g, ' ').split(' ')
+						.filter((x) => x != '')
+						.join(' ')
+						.split(''))
+					.map((x,i,a) => (x.match(/[a-z]/) && i)? (a[0].match('tich'))?
+						(a[0] = arr[x.charCodeAt() - 97][2]) && arr[x.charCodeAt() - 97][0] + ' ':
+						(a[0] = arr[x.charCodeAt() - 97][2]) && arr[x.charCodeAt() - 97][1] + ' ':
+						'</div><div>' + a[0] + ' ')
+					.join('') + '</div>';
+		} // end of morse toggle
+		
+		async function musicNote(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, ' ').split(' ').filter(x => x != '');
+			const width = 12 + 12 * Math.max.apply(null, message
+				.map(x => x.length)
+				.concat(0));
+			const height = 80 * message.length;
+			let svg = `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}">\n`;
+			
+			message = message
+				.map((y,k) => y.split('')
+					.map((x,i) => x.charCodeAt() - 65)
+					.map((x,i) => `<path d="M${12 * (i + 1) - 5},${80 * k + ((x % 13) + 2) * 5} A5,4 0 1,0 ${12 * (i + 1) + 5},${80 * k + ((x % 13) + 2) * 5} A5,4 0 1,0 ${12 * (i + 1) - 5},${80 * k + ((x % 13) + 2) * 5}` +
+						((x / 13 >= 1)? ``: ` M${12 * (i + 1) - 2},${80 * k + ((x % 13) + 2) * 5} A2,3 0 1,1 ${12 * (i + 1) + 2},${80 * k + ((x % 13) + 2) * 5} A2,3 0 1,1 ${12 * (i + 1) - 2},${80 * k + ((x % 13) + 2) * 5}`) +
+						`" fill="black" transform="rotate(-15,${12 * (i + 1)},${80 * k + ((x % 13) + 2) * 5})"/>\n` +
+						`<path d="M${12 * (i + 1) + ((x % 13 < 7)? -1: 1) * 4} ${80 * k + ((x % 13) + 2) * 5} v${((x % 13 < 7)? 1: -1) * 20}" stroke="black" stroke-width="2"/>\n`)
+					.join(''))
+				.join('') + message
+				.map((y, k) => Array(4).fill(0)
+					.map((x,i) => `<path d="M0 ${k * 80 + 25 + i * 10} h${width}" stroke="black" stroke-width="1"/>\n`)
+					.join(''))
+				.join('');
+			
+			svg += message + '</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +  btoa(svg) +
+				'" download="music note.svg">music note.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="music note.png">music note.png</a></i></div>';
+		} // end of music note
+		
+		function nsew(message, key) {
+			let arr = ["(S, SW)", "(SW, S)", "(S, W)", "(W, S)", "(S, NW)", "(NW, S)", "(S, N)", "(N, S)",
+				"(S, NE)", "(NE, S)", "(S, E)", "(E, S)", "(S, SE)", "(SE, S)", "(SW, W)", "(W, SW)",
+				"(SW, NW)", "(NW, SW)", "(N, E)", "(E, N)", "(SW, N)", "(N, SW)", "(SW, NE)", "(NE, SW)",
+				"(SW, E)", "(E, SW)", "(SW, SE)", "(SE, SW)", "(W, NW)", "(NW, W)", "(W, N)", "(N, W)",
+				"(W, NE)", "(NE, W)", "(W, E)", "(E, W)", "(W, SE)", "(SE, W)", "(NW, N)", "(N, NW)",
+				"(NW, NE)", "(NE, NW)", "(N, SE)", "(SE, N)", "(NE, E)", "(E, NE)", "(NE, SE)", "(SE, NE)",
+				"(NW, E)", "(E, NW)", "(E, SE)", "(SE, E)"];
+			return '<div>hint: (SE, SW)= N, (E, SW)= M, (N, W)= P</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[2 * (char.charCodeAt() - 97) + Math.floor(Math.random() * 2)] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of north south east west
+		
+		function numbers(message, key) {
+			let prime = 101, shift = Math.floor(Math.random() * prime) + 1;
+			let base = [11, 12, 15, 18, 26, 27, 28, 29, 34, 35, 38, 40, 42, 46, 48, 50, 51, 53, 55, 59, 61, 63, 66, 67, 72, 73, 74, 75, 83, 86, 89, 90, 93, 94, 98, 99];
+			base = base[Math.floor(Math.random() * base.length)];
+			let arr = Array(26).fill(0)
+				.map((v,i) => Array(i + shift).fill(base).reduce((a,b) => (a * b) % prime))
+				.map((v,i) => (Math.random() < .2)? String.fromCharCode(i + 65): v);
+			return '<div>hint: deductive reasoning</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of  numbers
+		
+		function periodicTable(message, key) {
+			message = message.toLowerCase().match(/[a-z]+/g);
+			let element ={
+				"H":"Hydrogen", "He":"Helium", "Li":"Lithium", "Be":"Beryllium", "B":"Boron",
+				"C":"Carbon", "N":"Nitrogen", "O":"Oxygen", "F":"Fluorine", "Ne":"Neon",
+				"Na":"Sodium", "Mg":"Magnesium", "Al":"Aluminum", "Si":"Silicon",
+				"P":"Phosphorus", "S":"Sulfur", "Cl":"Chlorine", "Ar":"Argon", "K":"Potassium",
+				"Ca":"Calcium", "Sc":"Scandium", "Ti":"Titanium", "V":"Vanadium",
+				"Cr":"Chromium", "Mn":"Manganese", "Fe":"Iron", "Co":"Cobalt", "Ni":"Nickel",
+				"Cu":"Copper", "Zn":"Zinc", "Ga":"Gallium", "Ge":"Germanium", "As":"Arsenic",
+				"Se":"Selenium", "Br":"Bromine", "Kr":"Krypton", "Rb":"Rubidium",
+				"Sr":"Strontium", "Y":"Yttrium", "Zr":"Zirconium", "Nb":"Niobium",
+				"Mo":"Molybdenum", "Tc":"Technetium", "Ru":"Ruthenium", "Rh":"Rhodium",
+				"Pd":"Palladium", "Ag":"Silver", "Cd":"Cadmium", "In":"Indium", "Sn":"Tin",
+				"Sb":"Antimony", "Te":"Tellurium", "I":"Iodine", "Xe":"Xenon", "Cs":"Cesium",
+				"Ba":"Barium", "La":"Lanthanum", "Ce":"Cerium", "Pr":"Praseodymium",
+				"Nd":"Neodymium", "Pm":"Promethium", "Sm":"Samarium", "Eu":"Europium",
+				"Gd":"Gadolinium", "Tb":"Terbium", "Dy":"Dysprosium", "Ho":"Holmium",
+				"Er":"Erbium", "Tm":"Thulium", "Yb":"Ytterbium", "Lu":"Lutetium",
+				"Hf":"Hafnium", "Ta":"Tantalum", "W":"Tungsten", "Re":"Rhenium", "Os":"Osmium",
+				"Ir":"Iridium", "Pt":"Platinum", "Au":"Gold", "Hg":"Mercury", "Tl":"Thallium",
+				"Pb":"Lead", "Bi":"Bismuth", "Po":"Polonium", "At":"Astatine", "Rn":"Radon",
+				"Fr":"Francium", "Ra":"Radium", "Ac":"Actinium", "Th":"Thorium",
+				"Pa":"Protactinium", "U":"Uranium", "Np":"Neptunium", "Pu":"Plutonium",
+				"Am":"Americium", "Cm":"Curium", "Bk":"Berkelium", "Cf":"Californium",
+				"Es":"Einsteinium", "Fm":"Fermium", "Md":"Mendelevium", "No":"Nobelium",
+				"Lr":"Lawrencium", "Rf":"Rutherfordium", "Db":"Dubnium", "Sg":"Seaborgium",
+				"Bh":"Bohrium", "Hs":"Hassium", "Mt":"Meitnerium", "Ds":"Darmstadtium",
+				"Rg":"Roentgenium", "Cn":"Copernicium", "Nh":"Nihonium", "Fl":"Flerovium",
+				"Mc":"Moscovium", "Lv":"Livermorium", "Ts":"Tennessine", "Og":"Oganesson"
+			};
+			key = [
+				['Au','Ac','Ag','Al','Am','Ar','As','At'],
+				['B','Ba','Be','Bh','Bi','Bk','Br'],
+				['C','Ca','Cd','Ce','Cf','Cl','Cm','Cn','Co','Cr','Cs','Cu'],
+				['Db','Ds','Dy'],['Er','Es','Eu'],['F','Fe','Fl','Fm','Fr'],
+				['Ge','Ga','Gd'],['H','He','Hf','Hg','Ho','Hs'],
+				['I','In','Ir'],['Gd'],['K','Kr'],['La','Li','Lr','Lu','Lv'],
+				['Mn','Mc','Md','Mg','Mo','Mt'],
+				['N','Na','Nb','Nd','Ne','Nh','Ni','No','Np'],['O','Og','Os'],
+				['P','Pa','Pb','Pd','Pm','Po','Pr','Pt'],['K'],
+				['Ra','Rb','Re','Rf','Rg','Rh','Rn','Ru'],
+				['S','Sb','Sc','Se','Sg','Si','Sm','Sn','Sr'],
+				['Te','Ta','Tb','Tc','Th','Ti','Tl','Tm','Ts'],
+				['U'],['V'],['W'],['Xe'],['Y','Yb'],['Zn','Zr']
+			];
+			
+			if(!message) message = [];
+			message.forEach((word,index) => {
+				let result = '';
+				word = word.split('');
+
+				for(let i = 0; i < word.length; i++) {
+					// get two letter symbol
+					if(word[i+1] && key[word[i].charCodeAt() - 97]
+						 .includes([word[i].toUpperCase(), word[i+1]].join(''))) {
+						result += [word[i].toUpperCase(), word[i+1]].join('') + ' ';
+						i++;
+					} // end of if
+
+					// get first symbol
+					else {
+						result += key[word[i].charCodeAt() - 97][0] + ' ';
+					} // end of else
+				} // end of for
+
+				message[index] = result;
+			}); // end of for each
+			
+			return '<div>hint: welp, get to it</div><div>' +
+				message
+					.map((symbols) => symbols.match(/[A-Za-z]+/g)
+						.map((symbol) => element[symbol])
+						.join(' '))
+					.join('</div><div>') +
+				'</div><div><hr></div><div><i>warning: make sure \"' +
+				message
+					.map((symbols) => symbols.match(/[A-Za-z]+/g)
+						.join(''))
+					.join(' ') + 
+				'\" is readable. also please include a periodic table with this mat tu</i></div>';
+		} // end of periodic table
+		
+		function pyramid(message, key) {
+			let arr = [1, 2, 22, 3, 33, 333, 4, 44, 444, 4444, 5, 55, 555, 5555, 55555,
+				6, 66, 666, 6666, 66666, 666666, 7, 77, 777, 7777, 77777];
+			return '<div>hint: Form a pyramid. A = 1, C = 22, F = 333, J = 4444</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of pyramid
+
+		function qwerty(message, key) {
+			let arr = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd',
+				'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm'];
+			return '<div>hint: QWERTY = ABCDEF</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of qwerty
+		
+		function realign(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '').split('');
+			
+			for(let index = 2 + Math.floor(Math.random() * 5); index < message.length;
+					index += 2 + Math.floor(Math.random() * 5)) {
+				message.splice(index, 0, ' ');
+			} // end of for
+			
+			return '<div>hint: spaces</div><div>' + message.join('') + '</div>';
+		} // end of realign
+		
+		function reverseAlphabet(message, key) {
+			return '<div>hint: going backwards</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => String.fromCharCode(219 - char.charCodeAt()) + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of reverse Alphabet
+		
+		function rollerCoaster(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			return '<div>hint: up and down, forward and back</div><div>' + [0,1]
+				.map((y,j) => Array(message.length).fill(0)
+					.map((x,i) => i)
+					.filter((x,i,a) => x % 2 == y && x <= parseInt(a.length / 2)))
+				.map((y,j) => y
+					.map((x) => (x == 0 || 2 * x == message.length)?
+						message[x]: message[message.length - x] + ' ' + message[x])
+					.join(' '))
+				.join('</div><div>') + '</div>';
+		} // end of roller coaster
+
+		function roygbiv(message, key) {
+			let arr = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+			return '<div>hint: ROYGBIV. A = <font color="red">█</font>. H = <font color="red">██</font></div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => Array(Math.floor((char.charCodeAt() - 97) / arr.length) + 1)
+						.fill('█').join('').fontcolor(arr[(char.charCodeAt() - 97) % arr.length]) + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of roygbiv
+		
+		function scramble(message, key) {
+			let msg = message.toLowerCase().match(/[a-z]+/g);
+			if(!msg) msg = [];
+			let arr = msg.map((y) => Array(y.length).fill(0).map((x,i) => i));
+			let str = '';
+			
+			arr.forEach((x,i,a) => {
+				str = '';
+				while(x.length)
+					str += msg[i][x.splice(parseInt(Math.random() * x.length), 1)];
+				a[i] = str;
+			}); // end of for each
+			
+			return '<div>hint: unscramble</div><div>' + arr.join(' ') + '</div>';
+		} // end of scramble
+		
+		async function seismograph(message, key) {
+			const arr = ['01', '1000', '1010', '100', '0', '0010', '110', '0000', '00',
+				'0111', '101', '0100', '11', '10', '111', '0110', '1101', '010',
+				'000', '1', '001', '0001', '011', '1001', '1011', '1100'];
+			key = [[2,-15,2,30,2,-15], [2,-30,2,60,2,-30], [8,0]];
+			message = message.toLowerCase().replace(/[^a-z]/g, ' ').split(' ')
+				.filter(x => x != '')
+				.map(z => z.split('')
+					.map(y => arr[y.charCodeAt() - 97]
+						.split('')
+						.map(x => key[parseInt(x)].slice())
+						.map(x => x
+							.map((w,h) => (h % 2)? w + Math.round(Math.random() * 6 - 3): w))
+						.map(x => x.slice(0,5).concat(x[5] - x
+							.filter((w,h) => h % 2)
+							.reduce((t,s) => t + s, 0))))
+					.reduce((t,s) => t.concat(key[2]).concat(s), [])
+					.flat());
+			
+			const height = message.length * 80;
+			const width = key[2][0] + 20 + Math.max.apply(null, message
+				.map(y => y
+					.filter((x,i) => i % 2 == 0)
+					.reduce((t,s) => t + s, 0))
+				.concat(0));
+			
+			const svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				height + '" width="' + width + '">' + message
+					.map((x,i) => '<path d="M10 ' + (40 + i * 80) + ' l' +
+						(x.concat(key[2]).join(' ')) +
+						'" stroke="black" stroke-width="2" fill="none" />')
+					.join('') + '</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +  btoa(svg) +
+				'" download="seismograph.svg">seismograph.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="seismograph.png">seismograph.png</a></i></div>';
+		} // end of seismograph
+		
+		async function semaphoreCircle(message, key) {
+			const arr = [[6,38],[7,30],[6,45],[9,30],[6,53],[10,30],[0,30],[6,00],
+				[1,30],[6,08],[3,30],[6,15],[4,30],[6,23],[7,45],[9,38],
+				[7,53],[10,38],[0,15],[3,0],[0,38],[7,0],[1,38],[7,8],
+				[3,38],[7,15],[4,38],[7,23],[9,53],[10,45],[0,45],[9,0],
+				[1,45],[9,8],[3,45],[9,15],[4,45],[9,23],[0,53],[10,0],
+				[1,53],[10,8],[0,23],[4,0],[1,15],[3,8],[1,23],[4,8],
+				[3,53],[10,15],[3,23],[4,15]];
+			const three = ['m','i','y','c','u','e','q','x','s','v','n','k'];
+			const eight = ['z','g','a','h','o','t','','w'];
+			const four = ['f','b','p','j'];
+			const two = ['r','l','d']
+			message = message.toLowerCase().replace(/[^a-z]/g, '').split('')
+				.map(x => arr[2 * (x.charCodeAt() - 97) + parseInt(Math.random() * 2)])
+				.map(x => [(x[0] / 6 + x[1] / 360) * Math.PI  - Math.PI / 2, x[1] / 30 * Math.PI - Math.PI / 2]);
+			key = parseInt(key);
+			if(isNaN(key) || key <= 0) key = 5;
+			const size = 100;
+			const width = size * key;
+			const height = size * Math.ceil(message.length / key);
+			
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" height="' +
+				height + '" width="' + width + '">\n' + message
+					.map((x,i) => '<path d="M' + ((i % key) * size + size / 2) + ' ' +
+						(parseInt(i / key) * size + size / 2) +
+						' l' + Math.round(size * .25 * Math.cos(x[0])) + ' ' +
+						Math.round(size * .25 * Math.sin(x[0])) +
+						' l' + Math.round(size * -.25 * Math.cos(x[0])) + ' ' +
+						Math.round(size * -.25 * Math.sin(x[0])) +
+						' l' + Math.round(size * .35 * Math.cos(x[1])) + ' ' +
+						Math.round(size * .35 * Math.sin(x[1])) +
+						'" fill="none" stroke="black" stroke-width="4"/>' +
+						'<circle cx="' + ((i % key) * size + size / 2) +
+						'" cy="' + (parseInt(i / key) * size + size / 2) +
+						'" r="' + (size * .45) + '"' +
+						' stroke="black" stroke-width="2" fill="none" />')
+					.join('\n') + '\n</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint:</div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +
+				btoa(svg) + '" download="semaphore circle.svg">semaphore circle.svg</a> <a href="' +
+				canvas.toDataURL("image/png") + '" download="semaphore circle.png">semaphore circle.png</a></i></div>' +
+				'<div><hr></div><div>tip: insert number for number of circle per row</div>';
+		} // end of semaphore circle
+		
+		function semaphoreRing(message, key) {
+			let arr = ["0+1,", "1+7,", "0+2,", "2+6,", "0+3,", "3+5,", "0+4,", "4+4,", "0+5,", "5+3,",
+				"0+6,", "6+2,", "0+7,", "7+1,", "1+1,", "2+7,", "1+2,", "3+6,", "4+2,", "6+6,",
+				"1+3,", "4+5,", "1+4,", "5+4,", "1+5,", "6+3,", "1+6,", "7+2,", "2+1,", "3+7,",
+				"2+2,", "4+6,", "2+3,", "5+5,", "2+4,", "6+4,", "2+5,", "7+3,", "3+1,", "4+7,",
+				"3+2,", "5+6,", "4+3,", "7+5,", "5+1,", "6+7,", "5+2,", "7+6,", "3+3,", "6+5,",
+				"6+1,", "7+7,"];
+			return '<div>hint: </div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[2 * (char.charCodeAt() - 97) + parseInt(Math.random() * 2)] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of semaphore ring
+
+		function semaphoreTime(message, key) {
+			let arr = ['6:35', '9:30', '11:30', '12:30', '1:30', '3:30', '5:30', '7:45',
+				'11:35', '12:15', '7:00', '7:05', '7:15', '5:35', '11:45', '9:00', '1:45',
+				'9:15', '9:25', '11:00', '1:55', '5:00', '1:15', '5:05', '11:15', '5:15'];
+			return '<div>hint: K = 7:00, V = 5:00</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of semaphore time
+
+		function shuffle(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '').split('');
+			return '<div>hint: take turns</div><div>' +
+				message.filter((c, i) => i % 2 == 0).join(' ') + '</div><div>' +
+				message.filter((c, i) => i % 2 == 1).join(' ') + '</div>';
+		} // end of shuffle
+		
+		function signCross(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '').split('');
+			message = [
+				message.filter((x,i) => i % 4 == 0),
+				message.filter((x,i) => i % 4 == 1),
+				message.filter((x,i) => i % 4 == 2),
+				message.filter((x,i) => i % 4 == 3)
+			];
+			
+			let center = [message[2].length, message[0].length];
+			let array = Array(message[0].length + 1 + message[1].length).fill(0)
+				.map(() => Array(message[2].length + 1 + message[3].length).fill(0)
+					.map(() => String.fromCharCode(Math.random() * 26 + 65)));
+			
+			message = [[].concat(message[0].reverse(), '♥', message[1]),
+				[].concat(message[2].reverse(), '♥', message[3])];
+			array[center[1]] = message[1];
+			array.forEach((x,i) => {
+				x[center[0]] = message[0][i];
+			}); // end of for each
+			array = array
+				.map((x) => x
+					.join(' '))
+				.join('</div><div>');
+			
+			return '<div>hint: how did Jesus die</div><div>' + array +'</div>';
+		} // end of sign of the cross
+		
+		function signCross2(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '');
+			message = [
+				message.substring(0, message.length / 4).split(''),
+				message.substring(message.length / 4, message.length / 2).split(''),
+				message.substring(message.length / 2, message.length / 4 * 3).split(''),
+				message.substring(message.length / 4 * 3).split('')
+			];
+			
+			let center = [message[2].length, message[0].length];
+			let array = Array(message[0].length + 1 + message[1].length).fill(0)
+				.map(() => Array(message[2].length + 1 + message[3].length).fill(0)
+					.map(() => String.fromCharCode(Math.random() * 26 + 65)));
+			
+			message = [[].concat(message[0], '♥', message[1]),
+				[].concat(message[2], '♥', message[3])];
+			
+			array[center[1]] = message[1];
+			array.forEach((x,i) => {
+				x[center[0]] = message[0][i];
+			}); // end of for each
+			array = array
+				.map((x) => x
+					.join(' '))
+				.join('</div><div>');
+			
+			return '<div>hint: how did Jesus die</div><div>' + array +'</div>';
+		} // end of sign of the cross 2
+		
+		async function starChart(message, key) {
+			message = message.toUpperCase().match(/[A-Z]+/g);
+			if(!message) message = [];
+			let size = 1000, unit = Math.floor(size/19);
+			let height = (Math.ceil(message.length / 3) * 6 + 1.5) * unit;
+			let svg = '<svg xmlns="http://www.w3.org/2000/svg" font-family="Courier New" font-size="' +
+					size / 19 + '" height="' + height * 2 + '" width="' + size + '">';
+			let node = undefined, closeNode = undefined, tracker = 0;
+			let random = [], array = [], stack = [], star = [], label = [], cutLine = [];
+			
+			for(let index = .5; index < 19; index += 6) {
+				cutLine.push([index, .5 + Math.ceil(message.length / 3) * 6 + 2, 0, Math.ceil(message.length / 3) * 6]);
+			} // end of for
+			
+			for(let index = .5; index < Math.ceil(message.length / 3) * 6 + 1; index += 6) {
+				cutLine.push([.5, index + Math.ceil(message.length / 3) * 6 + 2, 18, 0]);
+			} // end of for
+			
+			random = Array(message.length).fill(0).map((x,i) => i);
+			while(random.length)
+				label.push(random.splice(parseInt(Math.random() * random.length), 1)[0]);
+			
+			message = message.map((x,i) => message[label[i]]);
+			
+			for(let index = 0; index < message.length; index++) {
+				while(stack.length < message[index].length) {
+					random = [parseInt(Math.random() * 6) + (index % 3) * 6,
+						parseInt(Math.random() * 6) + parseInt(index / 3) * 6];
+					
+					if(stack.map((x) => x.join())
+						.indexOf([random[0], random[1] + Math.ceil(message.length / 3) * 6 + 2].join()) < 0) {
+						stack.push([random[0], random[1] + Math.ceil(message.length / 3) * 6 + 2]);
+						star.push([random[0] + 1, random[1] + 1]);
+					} // end of if
+				} // end of while
+				
+				while(stack.length) {
+					node = stack.pop();
+					tracker = array.length;
+					
+					stack.forEach((y) => {
+						if(Math.sqrt(Math.pow(node[0] - y[0], 2) + Math.pow(node[1] - y[1], 2)) < 1.1) {
+							array.push([node.map((x) => (x + 1) * unit).join(' '),
+								y.map((x) => (x + 1) * unit).join(' ')]);
+						} // end of if
+					}); // end of for each
+					
+					if(tracker == array.length && stack.length) {
+						closeNode = stack.sort((a,b) =>
+							Math.sqrt(Math.pow(node[0] - a[0], 2) + Math.pow(node[1] - a[1], 2))
+							- Math.sqrt(Math.pow(node[0] - b[0], 2) + Math.pow(node[1] - b[1], 2)))[0];
+						array.push([node.map((x) => (x + 1) * unit).join(' '),
+							closeNode.map((x) => (x + 1) * unit).join(' ')]);
+					} // end of if
+				} // end of while
+			} // end of for
+			
+			cutLine = cutLine
+				.map((y) => y.map((x) => x * unit))
+				.map((x) => '<path stroke-dasharray="10,20" d="M' + x[0] + ' ' + x[1] +
+					' l' + x[2] + ' ' + x[3] + '" stroke="grey" stroke-width="2" fill="none"/>')
+				.join('');
+			label = label
+				.map((x, i) => [(i % 3) * 6 + 4, parseInt(i / 3) * 6 + Math.ceil(message.length / 3) * 6 + 6, x])
+				.map((x) => '<text x="' + x[0] * unit + '" y="' + x[1] * unit +
+					'" transform="rotate(' + (90 * parseInt(Math.random() * 4)) + ' ' +
+					x[0] * unit + ',' + x[1] * unit + ')" >' + (x[2] + 1) + '</text>')
+				.join('');
+			message = message.join('');
+			star = star
+				.map((y) => [y[0] * unit, (y[1] + 1) * unit])
+				.map((x,i) => '<text x="' + x[0] + '" y="' + x[1] + '" >' + message[i] + '</text>').join('');
+			array = array
+				.map((x) => '<path d="M' + x[0] + ' L' + x[1] + '" stroke="black" stroke-width="2" fill="none"/>')
+				.join(''); 
+			
+			svg += array + star + label + cutLine + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = size;
+			canvas.height = height * 2;
+			ctx.drawImage(img, 0, 0);
+				
+			return '<div>hint: </div><div>' +
+				'<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' +
+				'<div><hr></div></div><div>downloads: ' + 
+				'<a href="data:image/svg+xml;base64,' + btoa(svg) +
+				'" download="star chart.svg">star chart.svg</a> ' +
+				'<a href="' + canvas.toDataURL("image/png") +
+				'" download="star chart.png">star chart.png</a></i></div>' +
+				'<div><hr></div><div><i>tip: cut out the constellation. can trace on tracing paper.';
+		} // end of star chart
+		
+		function takeFirst(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			let encrypt = '<div>hint: take the first</div><div>';
+			// adjective
+			let aj = ['agreeable', 'bold', 'colorful', 'delightful', 'embarrassed', 'fierce', 'gentle',
+				'happy', 'ichy',  'jumpy', 'kind', 'large', 'muscular', 'nervous', 'offensive',
+				'polite', 'quiet', 'round', 'small', 'thankful', 'unique', 'victorious', 'witty',
+				'xeric', 'young', 'zealous'];
+			// noun animal
+			let n = ['alligator', 'bear', 'cat', 'dog', 'elephant', 'flamingo', 'giraffe', 'horse',
+				'iguana', 'jellyfish', 'kangaroo', 'lion', 'monkey', 'narwhal', 'owl', 'panda',
+				'quail', 'raccoon', 'squirrel', 'tiger', 'unicorn', 'vulture', 'worm',
+				'xenarthran', 'yak', 'zebra'];
+			// verb
+			let v = ['ate', 'bit', 'caught', 'dated', 'embody', 'fought', 'got', 'heard', 'idle',
+				'jump', 'knew', 'left', 'met', 'needed', 'ousted', 'paid', 'quoted', 'ran',
+				'swam', 'threw', 'understood', 'visited', 'woke', 'x-rayed', 'yelled', 'zoned'];
+			// adverb
+			let ad = ['awkwardly', 'beautifully', 'cheerfully', 'diligently', 'eagerly', 'foolishly',
+				'grimly', 'happily', 'idly', 'jealously', 'kindly', 'lazily', 'mindfully',
+				'narrowly', 'openly', 'peacefully', 'quickly', 'rigthfully', 'sneakily', 'together',
+				'ultimately', 'verbally', 'willingly', 'xenophobically', 'youthfully', 'zealously'];
+			// prepersitional
+			let p = ['above', 'between', 'conserning', 'down', 'except', 'from', 'gounded', 'hidden',
+				'in', 'joyful', 'keen', 'like', 'minus', 'near', 'on', 'past', 'quick', 'round',
+				'since', 'to', 'under', 'versus', 'with', 'xeric', 'yappy', 'zippy'];
+			let list = [[n], [v], [ad, v], [aj, n], [n, v], [n, ad, v], [n, v, p, n],
+				[n, v, aj, n], [aj, n, v, aj, n], [aj, n, ad, v, aj, n]];
+			let workingList;
+			
+			for(let index = 0; index < message.length; index += workingList.length) {
+				workingList = list.filter((l) => l.length <= (message.length - index));
+				workingList = workingList[Math.floor(Math.random() * workingList.length)];
+				encrypt += workingList
+					.map((l, i) => l[message.charCodeAt(index + i) - 97])
+					.join(' ')
+					.replace(/[a-z]/, (c) => c.toUpperCase()) + '. ';
+			} // end of for
+			
+			return encrypt + '</div>';
+		} // end of take first
+
+		function ternary(message, key) {
+			let arr = ['001', '002', '010', '011', '012', '020', '021', '022', '100',
+				'101', '102', '110', '111', '112', '120', '121', '122', '200',
+				'201', '202', '210', '211', '212', '220', '221', '222'];
+			return '<div>hint: A = 001, C = 010, I = 100</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of ternary
+		
+		function timeTable(message, key) {
+			let arr = [
+				['1:10','2:05'],['1:20','2:10','4:05'],['1:30','2:15','3:10','6:05'],
+				['1:40','2:20','4:10','8:05'],['1:50','2:25','5:10','10:05'],
+				['2:30','4:15','3:20','6:10','12:05'],['2:35','7:10','14:05'],
+				['2:40','4:20','8:10','16:05'],['2:45','3:30','6:15','9:10','18:05'],
+				['2:50','4:25','5:20','10:10','20:05'],['2:55','11:10','22:05'],
+				['4:30','8:15','3:40','6:20','12:10','24:05'],['13:10'],['4:35','7:20','14:10'],
+				['3:50','6:25','5:30','10:15','15:10'],['4:40','8:20','16:10'],['17:10'],
+				['4:45','6:30','12:15','9:20','18:10'],['19:10'],['4:50','8:25','5:40','10:20','20:10'],
+				['6:35','7:30','14:15','21:10'],['4:55','11:20','22:10'],['23:10'],
+				['8:30','16:15','6:40','12:20','24:10'],['5:50','10:25'],['13:20']];
+			return '<div>hint: 3:00 = 0, 3:45 = 135, 7:25 = 175</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, ' ')
+					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97]
+						[Math.floor(Math.random() * arr[char.charCodeAt() - 97].length)] + ' ')
+					.replace(/  /g, '</div><div>') + '</div>';
+		} // end of time table
+		
+		async function tpRoll(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, ' ').split(' ').filter(x => x != '');
+			if(key === '') key = 'GOD IS GOOD ';
+			message.unshift(key.toUpperCase());
+			let start = '<svg xmlns="http://www.w3.org/2000/svg" font-family="Courier New" font-size="24" height="768" width="528">' +
+				'<path d="M0 0 H504 V768 H0 V0" stroke="black" stroke-width="1" fill="none"/>' +
+				'<path d="M24 0 L48 96 72 0 M48 0 V96 M150 0 L174 96 198 0 M174 0 V96 M276 0 L300 96 324 0 M300 0 V96 M402 0 L426 96 450 0 M426 0 V96" stroke="black" stroke-width="1" fill="none"/>' +
+				'<path d="M24 768 L48 672 72 768 M48 768 V672 M150 768 L174 672 198 768 M174 768 V672 M276 768 L300 672 324 768 M300 768 V672 M402 768 L426 672 450 768 M426 768 V672" stroke="black" stroke-width="1" fill="none"/>' +
+				'<path d="M0 240 H504 M0 264 H504 M0 288 H504 M0 312 H504 M0 336 H504 M0 360 H504 M0 384 H504 M0 408 H504 M0 432 H504 M0 456 H504 M0 480 H504 M0 504 H504 M0 528 H504" stroke="black" stroke-width="1" fill="none"/>' +
+				'<path d="M504 0 H528 V768 H504" stroke="black" stroke-width="1" stroke-dasharray="5,5" fill="none"/>' +
+				'<path d="M504 240 H528 M504 264 H528 M504 288 H528 M504 312 H528 M504 336 H528 M504 360 H528 M504 384 H528 M504 408 H528 M504 432 H528 M504 456 H528 M504 480 H528 M504 504 H528 M504 528 H528" stroke="black" stroke-width="1" stroke-dasharray="5,5" fill="none"/>';
+			
+			if(20 < message.length)
+				return '<div>error: more then 20 words</div>';
+			if(message.filter(x => 12 < x.length).length)
+				return '<div>error: length of word longer then 12 letters</div>';
+			
+			// buffer blank words
+			while(message.length < 21)
+				message.splice(Math.floor(message.length * Math.random()), 0, '');
+			// buffer blank space
+			message.forEach((x,i,c) => {
+				c[i] = ' '.repeat(Math.floor(Math.random() * (13 - x.length))) + x;
+				c[i] = c[i] + ' '.repeat(12 - c[i].length);
+			}); // end of for each
+			// shift words
+			let random = undefined;
+			for(let j = 0; j < 12; j++) {
+				random = parseInt(Math.random() * 12);
+				message = message
+					.map((x,i) => x.substring(0,j) + message[(random + i) % 21][j] + x.substring(j + 1, 12));
+			}; // end of for */
+			
+			// format message
+			message = message
+				.reverse()
+				.map((y,j) => y
+					.split('')
+					//.map(x => (x === ' ' && Math.random() < 0.05)? String.fromCharCode(65 + Math.floor(Math.random() * 26)):x)
+					.map((x,i) =>
+						'<text x="' + (j * 24 + 245) + '" y="' + (i * 24 - 5) +
+						'" transform="rotate(90 ' + (j * 24) + ' ' + (i * 24) + ')">' + x + '</text>')
+					.join(''))
+				.join('');
+			
+			let svg = start + message + '</svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = 528;
+			canvas.height = 768;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: All The Time</div><div>' + img.outerHTML +
+				'</div><div><hr></div>' + '<div><i>downloads: ' + 
+				'<a href="data:image/svg+xml;base64,' + btoa(svg) +
+				'" download="tp roll.svg">tp roll.svg</a> ' +
+				'<a href="' + canvas.toDataURL("image/png") +
+				'" download="tp roll.png">tp roll.png</a></i></div>' +
+				'<div><hr></div><div>tip: print on thicker paper. craft around a toilet paper roll. ' +
+				'insert key for different starting text. if print on mac, scale to 93.75%</div>';
+		} // end of tp roll
+		
+		function treasureChest(message, key) {
+			return '<div>hint: the treasure is inside</div><div>' +
+				message.toLowerCase().replace(/[^a-z]/g, '')
+					.replace(/[a-z]/g, (char) =>
+						String.fromCharCode(Math.random() * 26 + 97) + char +
+						String.fromCharCode(Math.random() * 26 + 97) + ' ');
+		} // end of treasure chest
+		
+		function upperCase(message, key) {
+			key = parseInt(key);
+			if(isNaN(key) || key <= 0) key = 5; key--;
+			
+			return '<div>hint: take what you need</div><div>' + 
+				message.toUpperCase().replace(/[^A-Z]/g, '').split('')
+					.map(y => Array(parseInt(Math.random() * key)).fill(0)
+						 .map(x => String.fromCharCode(parseInt(Math.random() * 26) + 97))
+						 .join('') + y)
+					.map(y => y + Array(key + 1 - y.length).fill(0)
+						 .map(x => String.fromCharCode(parseInt(Math.random() * 26) + 97))
+						 .join('')) //*/
+					.join(' ') +
+				'</div><div><hr></div><div>tip: insert number for length of section</div>';
+		} // end of upper case
+		
+		async function vertical(message, key) {
+			message = message.toUpperCase();
+			let canvas = document.createElement('canvas');
+			let ctx = canvas.getContext('2d');
+			
+			canvas.width = message.length * 14.4;
+			canvas.height = 480;
+			ctx.scale(.05,1);
+			ctx.font = '480px Courier New';
+			ctx.fillText(message, 0, 360);
+			
+			let image = document.createElement('img');
+			await new Promise(resolve => {
+				image.onload = () => resolve();
+				image.src = canvas.toDataURL("image/png");
+			}); // end of new promise
+			
+			return '<div>hint: </div>' +
+				'<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' +
+				'<div><hr></div><div><i>download: <a href="' + canvas.toDataURL("image/png") +
+				'" download="vertical.png">vertical.png</a></i></div>';
+		} // end of handle align
+		
+		function vigenere(message, key) {
+			key = key.toUpperCase().match(/[A-Z]+/g);
+			if(!key) key = ['VEYM', 'PRAY', 'BIBLE'];
+			key = key[Math.floor(Math.random() * key.length)];
+			return '<div>hint: key = "' + key + '"</div><div>' +
+				message.toUpperCase().replace(/[^A-Z]/g, '').split('')
+					.map((x,i) => String.fromCharCode(
+						((x.charCodeAt() - key.charCodeAt(i % key.length) + 26) % 26) + 65))
+					.map((x,i) => (i % key.length == 0 && i)? ' ' + x: x)
+					.join('') +
+				'</div><div><hr></div><div><i>tip: insert key for vigenère cipher</i></div>';
+		} // end of vigenere
+		
+		function vigenereNumber(message, key) {
+			key = key.toUpperCase().match(/[A-Z]+/g);
+			if(!key) key = ['VEYM', 'PRAY', 'BIBLE'];
+			key = key[Math.floor(Math.random() * key.length)];
+			return '<div>hint: key = "' + key + '"</div><div>|' +
+				message.toUpperCase().replace(/[^A-Z]/g, '').split('')
+					.map((x,i) => (x.charCodeAt() - key.charCodeAt(i % key.length) + 26) % 26 + 1)
+					.map((x) => (String(x).length == 1)? '0' + x: x)
+					.map((x,i) => (i % key.length == 0 && i)? ' ' + x: x)
+					.join('.')
+					.replace(/\. /g, '|</div><div>|') +
+				'|</div><div><hr></div><div><i>tip: insert key for vigenère cipher</i></div>';
+		} // end of vigenere number
+		
+		function walk(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			let encrypt = '<div>hint: walk around</div><div>';
+			let size = Math.ceil(Math.sqrt(message.length) * 2) + 1;
+			let array = [], counter = 0, limit = message.length * 8;
+			let node = {x:size >> 1, y:size >> 1, d:0, h:0}, stack = [node];
+
+			while(true) {
+				array = Array(size).fill(0)
+					.map(() => Array(size).fill(0)
+						.map(() => String.fromCharCode(Math.random() * 26 + 97)));
+				counter = 0;
+
+				node = {x:size >> 1, y:size >> 1, d:0, h:0};
+				stack = [node];
+
+				while(stack.length <= message.length && stack.length) {
+					if(limit < counter++) break;
+
+					node = stack.pop();
+					if(node.h == 15) continue;
+
+					do {
+						node.d = Math.floor(Math.random() * 4);
+					} // end of do
+					while(Math.pow(2, node.d) & node.h);
+
+					node.h = node.h | Math.pow(2, node.d);
+					if(node.x == 0 && node.d == 0 || node.x == size - 1 && node.d == 2 ||
+						node.y == 0 && node.d == 1 || node.y == size - 1 && node.d == 3 ||
+						stack.find((v) => v.x == node.x + (node.d - 1) % 2 &&
+							v.y == node.y + (node.d - 2) % 2)) {
+						stack.push(node);
+						continue;
+					} // end of if
+
+					stack.push(node);
+					stack.push({
+						x:node.x + (node.d - 1) % 2, y:node.y + (node.d - 2) % 2,
+						d:0, h:Math.pow(2, (node.d + 2) % 4)});
+				} // end of while
+				if(limit < counter) continue;
+				
+				stack.slice(1).forEach((v,i) => {
+					array[v.y][v.x] = message[i];
+				}); // end of for each
+				stack.slice(0, stack.length - 1).forEach((v,i) => {
+					encrypt += ['left', 'up', 'right', 'down'][v.d] + ' ';
+				}); // end of for each
+				array[size >> 1][size >> 1] = '†';
+				encrypt += '</div><div>' + array.map((v) => v.join(' ')).join('</div><div>');
+				return encrypt + '</div>';
+				break;
+			} // end of infinite loop
+		} // end of walk
+		
+		function wall(message, key) {
+			message = message.toLowerCase().replace(/[^a-z]/g, '');
+			key = key.toLowerCase().replace(/[^a-z]/g, '');
+			if(key.length < 4) key = 'wall';
+			key = key.substring(0,4);
+			let length = message.length;
+			let factors = [1,1];
+			let prime = [101, 97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2]
+			
+			prime.forEach((v) => {
+				while(length && length % v == 0) {
+					length /= v;
+					(factors[1] < factors[0])? factors[1] *= v: factors[0] *= v;
+				} // end of while
+			}); // end of for each
+			
+			if(!message.length) factors = [0,0];
+			let size = [
+				Math.floor(1.5 * (factors[0] + 2)),
+				Math.floor(1.5 * (factors[1] + 2))];
+			let random = [
+				Math.floor(Math.random() * (size[0] - factors[0] - 1)) + 1,
+				Math.floor(Math.random() * (size[1] - factors[1] - 1)) + 1];
+			let array = Array(size[1]).fill(0).map(() => Array(size[0]).fill(0));
+			let substring = [];
+			
+			for(let i = 0; i < message.length; i += factors[0]) {
+				substring.push(message.substring(i, i + factors[0]));
+			} // end of for
+			
+			array = array
+				.map((w, j) => w.map((v,i) => (random[0] <= i && i < random[0] + factors[0] &&
+					random[1] <= j && j < random[1] + factors[1])?
+					substring[j - random[1]][i - random[0]]: 0));
+			array.forEach((w, j) => w.forEach((v,i) => {
+				if(v == 0) {
+					do {
+						array[j][i] = String.fromCharCode(Math.random() * 26 + 97);
+					} // end of do
+					while(array[j][i] == key[0] || array[j][i] == key[1] ||
+						array[j][i] == key[2] || array[j][i] == key[3]);
+				} // end of if
+			})); // end of for each
+			
+			array[random[1] - 1][random[0] - 1] = key[0].toUpperCase();
+			array[random[1] - 1][random[0] + factors[0]] = key[1].toUpperCase();
+			array[random[1] + factors[1]][random[0] + factors[0]] = key[2].toUpperCase();
+			array[random[1] + factors[1]][random[0] - 1] = key[3].toUpperCase();
+			
+			return '<div>hint: stay within the ' + key.toUpperCase() + '</div><div>' +
+				array.map((v) => v.join(' ')).join('</div><div>') + '</div><div><hr></div>' +
+				'<div><i>tip: insert key for wall. key must be at least 4 charaters</i></div>';
+		} // end of wall
+		
+		async function wheel(message, key) {
+			message = message.toUpperCase().replace(/[^A-Z]/g, '').split('');
+			let encrypt = '<div>hint: </div><div>';
+			// TODO: independent size
+			let size = 1000;
+			let radius = Math.floor(size * .4);
+			let start = '<svg xmlns="http://www.w3.org/2000/svg" font-family="Courier New" font-size="' +
+					size / 19 + '" height="' + size + '" width="' + size + '"><path d="M';
+			let end = '" stroke="black" stroke-width="2" fill="none"/>';
+			let temp = Array(message.length).fill(0).map((x,i) => i);
+			let array = [];
+			
+			while(temp.length) {
+				array.push(temp.splice(Math.floor(Math.random() * temp.length), 1)[0]);
+			} // end of while
+			temp = array;
+			array = array
+				.map((x) => Math.floor(radius * Math.cos(x * 2 * Math.PI / array.length) + (size / 2)) + ' ' +
+					Math.floor(radius * Math.sin(x * 2 * Math.PI / array.length) + (size / 2)));
+			message[0] = message[0] + '*';
+			temp = temp
+				.map((x,i) =>
+					'<text x="' + 
+					Math.floor(radius * 1.1 * Math.cos(x * 2 * Math.PI / array.length) + (size / 2) - size / 50) +
+					'" y="' +	
+					Math.floor(radius * 1.1 *Math.sin(x * 2 * Math.PI / array.length) + (size / 2) + size / 100) +
+					'">' + message[i] + '</text>')
+				.join('');
+			
+			let svg = start + array[0] + 'L' + array.filter((x,i) => i).join(' ') + end + temp + '</svg>';
+			svg = (array.length)? svg: '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+			let canvas = document.createElement("canvas");
+			let ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = size;
+			canvas.height = size;
+			ctx.drawImage(img, 0, 0);
+
+			return encrypt + '<img src="' + canvas.toDataURL("image/png") + '" width="500" height="' +
+				(500 * canvas.height / canvas.width) + '">' + '</svg></div>' +
+				'<div><hr></div>' + '<div><i>downloads: ' + 
+				'<a href="data:image/svg+xml;base64,' + btoa(svg) +
+				'" download="wheel.svg">wheel.svg</a> ' +
+				'<a href="' + canvas.toDataURL("image/png") +
+				'" download="wheel.png">wheel.png</a>' +
+				'</i></div>';
+		} // end of wheel
+		
+		function wordAddition(message, key) {
+			const wordList = ["a", "ability", "able", "about", "above", "accept",
+				"according", "account", "across", "act", "action", "activity", "actually",
+				"add", "address", "administration", "admit", "adult", "affect", "after",
+				"again", "against", "age", "agency", "agent", "ago", "agree", "agreement",
+				"ahead", "air", "all", "allow", "almost", "alone", "along", "already",
+				"also", "although", "always", "American", "among", "amount", "analysis",
+				"and", "animal", "another", "answer", "any", "anyone", "anything",
+				"appear", "apply", "approach", "area", "argue", "arm", "around", "arrive",
+				"art", "article", "artist", "as", "ask", "assume", "at", "attack",
+				"attention", "attorney", "audience", "author", "authority", "available",
+				"avoid", "away", "baby", "back", "bad", "bag", "ball", "bank", "bar",
+				"base", "be", "beat", "beautiful", "because", "become", "bed", "before",
+				"begin", "behavior", "behind", "believe", "benefit", "best", "better",
+				"between", "beyond", "big", "bill", "billion", "bit", "black", "blood",
+				"blue", "board", "body", "book", "born", "both", "box", "boy", "break",
+				"bring", "brother", "budget", "build", "building", "business", "but",
+				"buy", "by", "call", "camera", "campaign", "can", "cancer", "candidate",
+				"capital", "car", "card", "care", "career", "carry", "case", "catch",
+				"cause", "cell", "center", "central", "century", "certain", "certainly",
+				"chair", "challenge", "chance", "change", "character", "charge", "check",
+				"child", "choice", "choose", "church", "citizen", "city", "civil",
+				"claim", "class", "clear", "clearly", "close", "coach", "cold",
+				"collection", "college", "color", "come", "commercial", "common",
+				"community", "company", "compare", "computer", "concern", "condition",
+				"conference", "Congress", "consider", "consumer", "contain", "continue",
+				"control", "cost", "could", "country", "couple", "course", "court",
+				"cover", "create", "crime", "cultural", "culture", "cup", "current",
+				"customer", "cut", "dark", "data", "daughter", "day", "dead", "deal",
+				"death", "debate", "decade", "decide", "decision", "deep", "defense",
+				"degree", "Democrat", "democratic", "describe", "design", "despite",
+				"detail", "determine", "develop", "development", "die", "difference",
+				"different", "difficult", "dinner", "direction", "director", "discover",
+				"discuss", "discussion", "disease", "do", "doctor", "dog", "door", "down",
+				"draw", "dream", "drive", "drop", "drug", "during", "each", "early",
+				"east", "easy", "eat", "economic", "economy", "edge", "education",
+				"effect", "effort", "eight", "either", "election", "else", "employee",
+				"end", "energy", "enjoy", "enough", "enter", "entire", "environment",
+				"environmental", "especially", "establish", "even", "evening", "event",
+				"ever", "every", "everybody", "everyone", "everything", "evidence",
+				"exactly", "example", "executive", "exist", "expect", "experience",
+				"expert", "explain", "eye", "face", "fact", "factor", "fail", "fall",
+				"family", "far", "fast", "father", "fear", "federal", "feel", "feeling",
+				"few", "field", "fight", "figure", "fill", "film", "final", "finally",
+				"financial", "find", "fine", "finger", "finish", "fire", "firm", "first",
+				"fish", "five", "floor", "fly", "focus", "follow", "food", "foot", "for",
+				"force", "foreign", "forget", "form", "former", "forward", "four", "free",
+				"friend", "from", "front", "full", "fund", "future", "game", "garden",
+				"gas", "general", "generation", "get", "girl", "give", "glass", "go",
+				"goal", "good", "government", "great", "green", "ground", "group", "grow",
+				"growth", "guess", "gun", "guy", "hair", "half", "hand", "hang", "happen",
+				"happy", "hard", "have", "he", "head", "health", "hear", "heart", "heat",
+				"heavy", "help", "her", "here", "herself", "high", "him", "himself",
+				"his", "history", "hit", "hold", "home", "hope", "hospital", "hot",
+				"hotel", "hour", "house", "how", "however", "huge", "human", "hundred",
+				"husband", "I", "idea", "identify", "if", "image", "imagine", "impact",
+				"important", "improve", "in", "include", "including", "increase",
+				"indeed", "indicate", "individual", "industry", "information", "inside",
+				"instead", "institution", "interest", "interesting", "international",
+				"interview", "into", "investment", "involve", "issue", "it", "item",
+				"its", "itself", "job", "join", "just", "keep", "key", "kid", "kill",
+				"kind", "kitchen", "know", "knowledge", "land", "language", "large",
+				"last", "late", "later", "laugh", "law", "lawyer", "lay", "lead",
+				"leader", "learn", "least", "leave", "left", "leg", "legal", "less",
+				"let", "letter", "level", "lie", "life", "light", "like", "likely",
+				"line", "list", "listen", "little", "live", "local", "long", "look",
+				"lose", "loss", "lot", "love", "low", "machine", "magazine", "main",
+				"maintain", "major", "majority", "make", "man", "manage", "management",
+				"manager", "many", "market", "marriage", "material", "matter", "may",
+				"maybe", "me", "mean", "measure", "media", "medical", "meet", "meeting",
+				"member", "memory", "mention", "message", "method", "middle", "might",
+				"military", "million", "mind", "minute", "miss", "mission", "model",
+				"modern", "moment", "money", "month", "more", "morning", "most", "mother",
+				"mouth", "move", "movement", "movie", "Mr", "Mrs", "much", "music",
+				"must", "my", "myself", "name", "nation", "national", "natural", "nature",
+				"near", "nearly", "necessary", "need", "network", "never", "new", "news",
+				"newspaper", "next", "nice", "night", "no", "none", "nor", "north", "not",
+				"note", "nothing", "notice", "now", "n't", "number", "occur", "of", "off",
+				"offer", "office", "officer", "official", "often", "oh", "oil", "ok",
+				"old", "on", "once", "one", "only", "onto", "open", "operation",
+				"opportunity", "option", "or", "order", "organization", "other", "others",
+				"our", "out", "outside", "over", "own", "owner", "page", "pain",
+				"painting", "paper", "parent", "part", "participant", "particular",
+				"particularly", "partner", "party", "pass", "past", "patient", "pattern",
+				"pay", "peace", "people", "per", "perform", "performance", "perhaps",
+				"period", "person", "personal", "phone", "physical", "pick", "picture",
+				"piece", "place", "plan", "plant", "play", "player", "PM", "point",
+				"police", "policy", "political", "politics", "poor", "popular",
+				"population", "position", "positive", "possible", "power", "practice",
+				"prepare", "present", "president", "pressure", "pretty", "prevent",
+				"price", "private", "probably", "problem", "process", "produce",
+				"product", "production", "professional", "professor", "program",
+				"project", "property", "protect", "prove", "provide", "public", "pull",
+				"purpose", "push", "put", "quality", "question", "quickly", "quite",
+				"race", "radio", "raise", "range", "rate", "rather", "reach", "read",
+				"ready", "real", "reality", "realize", "really", "reason", "receive",
+				"recent", "recently", "recognize", "record", "red", "reduce", "reflect",
+				"region", "relate", "relationship", "religious", "remain", "remember",
+				"remove", "report", "represent", "Republican", "require", "research",
+				"resource", "respond", "response", "responsibility", "rest", "result",
+				"return", "reveal", "rich", "right", "rise", "risk", "road", "rock",
+				"role", "room", "rule", "run", "safe", "same", "save", "say", "scene",
+				"school", "science", "scientist", "score", "sea", "season", "seat",
+				"second", "section", "security", "see", "seek", "seem", "sell", "send",
+				"senior", "sense", "series", "serious", "serve", "service", "set",
+				"seven", "several", "sex", "sexual", "shake", "share", "she", "shoot",
+				"short", "shot", "should", "shoulder", "show", "side", "sign",
+				"significant", "similar", "simple", "simply", "since", "sing", "single",
+				"sister", "sit", "site", "situation", "six", "size", "skill", "skin",
+				"small", "smile", "so", "social", "society", "soldier", "some",
+				"somebody", "someone", "something", "sometimes", "son", "song", "soon",
+				"sort", "sound", "source", "south", "southern", "space", "speak",
+				"special", "specific", "speech", "spend", "sport", "spring", "staff",
+				"stage", "stand", "standard", "star", "start", "state", "statement",
+				"station", "stay", "step", "still", "stock", "stop", "store", "story",
+				"strategy", "street", "strong", "structure", "student", "study", "stuff",
+				"style", "subject", "success", "successful", "such", "suddenly", "suffer",
+				"suggest", "summer", "support", "sure", "surface", "system", "table",
+				"take", "talk", "task", "tax", "teach", "teacher", "team", "technology",
+				"television", "tell", "ten", "tend", "term", "test", "than", "thank",
+				"that", "the", "their", "them", "themselves", "then", "theory", "there",
+				"these", "they", "thing", "think", "third", "this", "those", "though",
+				"thought", "thousand", "threat", "three", "through", "throughout",
+				"throw", "thus", "time", "to", "today", "together", "tonight", "too",
+				"top", "total", "tough", "toward", "town", "trade", "traditional",
+				"training", "travel", "treat", "treatment", "tree", "trial", "trip",
+				"trouble", "true", "truth", "try", "turn", "TV", "two", "type", "under",
+				"understand", "unit", "until", "up", "upon", "us", "use", "usually",
+				"value", "various", "very", "victim", "view", "violence", "visit",
+				"voice", "vote", "wait", "walk", "wall", "want", "war", "watch", "water",
+				"way", "we", "weapon", "wear", "week", "weight", "well", "west",
+				"western", "what", "whatever", "when", "where", "whether", "which",
+				"while", "white", "who", "whole", "whom", "whose", "why", "wide", "wife",
+				"will", "win", "wind", "window", "wish", "with", "within", "without",
+				"woman", "wonder", "word", "work", "worker", "world", "worry", "would",
+				"write", "writer", "wrong", "yard", "yeah", "year", "yes", "yet", "you",
+				"young", "your", "yourself"];
+			
+			let diff = function(destWord, srcWord) {
+				let arr = Array(destWord.length + 1).fill(0)
+					.map((x,i) => Array(srcWord.length + 1).fill(0)
+						.map((w,h) => [destWord.substring(0,i), srcWord.substring(0,h)]));
+				
+				arr.forEach((x,i,c) => {
+					x.forEach((w,h,d) => {
+						if(i == 0 || h == 0){
+							return;
+						} // end of if
+	
+						if(c[0][h][1][c[0][h][1].length - 1] == d[0][0][d[0][0].length - 1]) {
+							d[h] = c[i - 1][h - 1];
+							return;
+						} // end of if
+	
+						if(c[i][h - 1].join('').length <= c[i - 1][h].join('').length) {
+							d[h] = c[i][h - 1].slice();
+							d[h][1] = d[h][1] + c[0][h][1][c[0][h][1].length - 1];
+						} // end of if
+						else {
+							d[h] = c[i - 1][h].slice();
+							d[h][0] = d[h][0] + d[0][0][d[0][0].length - 1];
+						} // end of else
+					}); // end of inner for each
+				}); // end of outer for each
+				
+				return [destWord].concat(arr[destWord.length][srcWord.length]);
+			} // end of different
+			
+			let find = function(srcWord, key) {
+				let destWords = wordList
+					.concat([srcWord])
+					.filter((y) => Math.abs(srcWord.length - y .length) <= key);
+				let temp = undefined;
+				
+				do {
+					temp = destWords.splice(Math.floor(Math.random() * destWords.length), 1)[0];
+					temp = diff(temp, srcWord);
+				} while(key < temp[1].length + temp[2].length);
+				
+				return temp;
+			} // end of find
+			
+			key = parseInt(key);
+			if(isNaN(key)) key = 3;
+			
+			return '<div>hint: </div><div>' + message
+				.toLowerCase().replace(/[^a-z]/g, ' ').split(' ')
+				.filter(x => x != '')
+				.map(x => find(x, key))
+				.map(x => x[0] +
+					((x[1].length)?' (-) ':'') + x[1].split('').join() +
+					((x[2].length)?' (+) ':'') + x[2].split('').join())
+				.join('</div><div>') + '</div><div><hr></div>' +
+				'<div><i>tip: insert number for amount of possible changes</i></div>';
+		} // end of word addition
+	</script>
+</body>
+</html>
