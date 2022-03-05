@@ -428,7 +428,8 @@
 				message.toLowerCase().replace(/[^a-z]/g, ' ')
 					.replace(/[a-z]/g, (char) => arr[char.charCodeAt() - 97] + ' ')
 					.replace(/  /g, '</div><div>') +
-				'</div><div><hr></div>' + '<div><i>tip: include braille key</i></div>';
+				'</div><div><hr></div><div><i>tip: include</i> '+
+        '<a href="https://docs.google.com/document/d/1wMu6R1kIHquZILHL41pCv_jcuhBeEwiC0-sRDyyv-IA/edit?usp=sharing" target="_blank">braille key</a></div>';
 		} // end of braille
 		
 		function caesarShift(message, key) {
@@ -723,7 +724,8 @@
 				.split('').map((char) => arr[char.charCodeAt() - 97])
 				.map((x) => x[Math.floor(Math.random() * x.length)])
 				.join('</div><div>') +
-				'<div><hr></div><div><i>tip: include "icon path key" handout</i></div>';
+				'<div><hr></div><div><i>tip: include </i>' +
+        '<a href="https://docs.google.com/document/d/1R02mQT8dhy9FBfsRDo9WaD62-_6exVhZov136b2uFko/edit?usp=sharing" target="_blank">icon path key</a></div>';
 		} // end of icon path
 		
 		function keyboard(message, key) {
@@ -915,7 +917,9 @@
 					.map((x,i,a) => (x.match(/[a-z]/) && i)? (a[i - 1].match(/[a-z]/))?
 						 '+' + (x.charCodeAt() - a[i - 1].charCodeAt() + 26) % 26:
 						 x.charCodeAt() - 96: '</div><div>')
-					.join('') + '</div>';
+					.join('') +
+          '</div><i>tip: include</i> '+
+        '<a href="https://drive.google.com/file/d/1ELm94n6Fsfs_YvWlqkttmtocPsGwj6lh/view?usp=sharing" target="_blank">shift key</a></div>';
 		} // end of math shift
 		
 		async function maze(message, key) {
@@ -1436,7 +1440,8 @@
 					.map((symbols) => symbols.match(/[A-Za-z]+/g)
 						.join(''))
 					.join(' ') + 
-				'\" is readable. also please include a periodic table with this mat tu</i></div>';
+				'\" is readable. also please include a ' +
+        '<a href="https://drive.google.com/file/d/1TU4O9UloHR9GK6gy5licg-rfo8uaiC0D/view?usp=sharing" target="_blank">periodic table</a> with this mat tu</i></div>';
 		} // end of periodic table
 		
 		function pyramid(message, key) {
