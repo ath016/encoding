@@ -102,6 +102,7 @@
 			<option value='morse break'>morse break</option>
 			<option value='morse odd even'>morse odd even</option>
 			<option value='morse toggle'>morse toggle</option>
+			<option value='music morse'>music morse</option>
 			<option value='music note'>music note</option>
 			<option value='nsew'>north south east west</option>
 			<option value='numbers'>numbers</option>
@@ -190,6 +191,7 @@
 				'morse break': morseBreak,
 				'morse odd even': morseOddEven,
 				'morse toggle': morseToggle,
+				'music morse': musicMorse,
 				'music note': musicNote,
 				'nsew': nsew,
 				'numbers': numbers,
@@ -1291,6 +1293,61 @@
 					.join('') + '</div>';
 		} // end of morse toggle
 		
+		async function musicMorse(message, key) {
+			let arr = ['01', '1000', '1010', '100', '0', '0010', '110', '0000', '00',
+				'0111', '101', '0100', '11', '10', '111', '0110', '1101', '010', '000',
+				'1', '001', '0001', '011', '1001', '1011', '1100'];
+			message = message.toUpperCase().replace(/[^A-Z]/g, ' ').split(' ')
+				.filter(x => x != '')
+				.map(z => z.split('')
+					.map(y => arr[y.charCodeAt() - 65].split('')
+						.map(x => parseInt(x) * 13 + parseInt(Math.random() * 7) + 3)));
+			
+			const width = 12 + 12 * Math.max.apply(null, message
+				.map((y,k,b) => y
+					.reduce((t,s) => t + s.length + 2,0) - 2)
+				.concat(0));
+			const height = 80 * message.length;
+			let svg = `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}">\n`;
+
+			message = message
+				.map((z,j) => z
+					.map((y,k,b) => y
+						.map((x,i) => `<path d="M${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) + 1) - 5},${80 * j + ((x % 13) + 2) * 5} ` +
+							`A5,4 0 1,0 ${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) +1) + 5},${80 * j + ((x % 13) + 2) * 5} ` +
+							`A5,4 0 1,0 ${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) + 1) - 5},${80 * j + ((x % 13) + 2) * 5}` +
+							((x / 13 < 1)? ``: ` M${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) + 1) - 2},${80 * j + ((x % 13) + 2) * 5} ` +
+							`A2,3 0 1,1 ${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) +1) + 2},${80 * j + ((x % 13) + 2) * 5} ` +
+							`A2,3 0 1,1 ${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) + 1) - 2},${80 * j + ((x % 13) + 2) * 5}`) +
+							`" fill="black" transform="rotate(-15,${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) + 1)},${80 * j + ((x % 13) + 2) * 5})"/>\n` +
+							`<path d="M${12 * (i + k * 2 + b.slice(0, k).reduce((t,s) => t + s.length,0) + 1) + ((x % 13 < 7)? -1: 1) * 4} ${80 * j + ((x % 13) + 2) * 5} v${((x % 13 < 7)? 1: -1) * 20}" stroke="black" stroke-width="2"/>\n`)
+						.join(''))
+					.join('')) + message
+				.map((y, k) => Array(4).fill(0)
+					.map((x,i) => `<path d="M0 ${k * 80 + 25 + i * 10} h${width}" stroke="black" stroke-width="1"/>\n`)
+					.join(''))
+				.join('');
+			
+			svg += message + '</svg>';
+			
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+			let img = document.createElement("img");
+			await new Promise(resolve => {
+				img.onload = () => resolve();
+				img.src = "data:image/svg+xml;base64," + btoa(svg);
+			}); // end of promise
+			canvas.width = width;
+			canvas.height = height;
+			ctx.drawImage(img, 0, 0);
+			
+			return '<div>hint: </div><div>' + img.outerHTML + '</div><div><hr></div>' +
+				'<div><i>downloads: <a href="data:image/svg+xml;base64,' +  btoa(svg) +
+				'" download="music morse.svg">music morse.svg</a> <a href="' +
+				canvas.toDataURL("image/png") +
+				'" download="music morse.png">music morse.png</a></i></div>';
+		} // end of music morse
+
 		async function musicNote(message, key) {
 			message = message.toUpperCase().replace(/[^A-Z]/g, ' ').split(' ').filter(x => x != '');
 			const width = 12 + 12 * Math.max.apply(null, message
