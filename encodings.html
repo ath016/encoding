@@ -101,6 +101,7 @@
 			<option value='morse bold'>morse bold</option>
 			<option value='morse break'>morse break</option>
 			<option value='morse odd even'>morse odd even</option>
+			<option value='morse simple'>morse simple</option>
 			<option value='morse toggle'>morse toggle</option>
 			<option value='music morse'>music morse</option>
 			<option value='music note'>music note</option>
@@ -153,7 +154,7 @@
 			
 			['binary','semaphore ring 2', 'sign of the cross', 'ternary'].forEach((x) => {
 				option = document.createElement('option');
-				option.text = x;
+				option.text = x + ' (hard)';
 				option.value = x;
 				options.add(option, arr.filter((v) => v < option.value).length);
 				arr = Array(options.length).fill(0).map((v,i) => options.item(i).text);
@@ -190,6 +191,7 @@
 				'morse bold': morseBold,
 				'morse break': morseBreak,
 				'morse odd even': morseOddEven,
+				'morse simple': morseSimple,
 				'morse toggle': morseToggle,
 				'music morse': musicMorse,
 				'music note': musicNote,
@@ -1269,6 +1271,20 @@
 						.join('') + ' ')
 					.replace(/  /g, '</div><div>') + '</div>';
 		} // end of morse odd even
+
+		function morseSimple(message, key) {
+			let arr = ['et','teee','tete','tee','e','eete','tte',
+				'eeee','ee','ettt','tet','etee','tt','te','ttt',
+				'ette','ttet','ete','eee','t','eet','eeet','ett',
+				'teet','tett','ttee'];
+			return '<div>hint:</div><div>' + message.toLowerCase().replace(/[^a-z]/g, ' ')
+				.split(' ')
+				.map(y => y
+					.split('')
+					.map((char) => arr[char.charCodeAt() - 97])
+					.join(' '))
+				.join('</div><div>') + '</div>'
+		} // end of morse simple
 
 		function morseToggle(message, key) {
 			let arr = [[" 01", " 11", "te"], [" 1100", " 0100", "tich"], [" 1111", " 0111", "tich"],
