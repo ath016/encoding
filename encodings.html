@@ -1779,21 +1779,30 @@
 		} // end of sign of the cross 2
 		
 		async function starChart(message, key) {
-			message = message.toUpperCase().match(/[A-Z]+/g);
-			if(!message) message = [];
-			let size = 1000, unit = Math.floor(size/19);
-			let height = (Math.ceil(message.length / 3) * 6 + 1.5) * unit;
+			message = message.toUpperCase().match(/[A-Z0-9]+/g) || []
+			key = parseInt(key) || 3;
+			let size = 1000
+			let length = 6;
+			let unit = Math.floor(size/(key*length + 1));
+			let height = (Math.ceil(message.length / key) * length + 1.5) * unit;
+			
 			let svg = '<svg xmlns="http://www.w3.org/2000/svg" font-family="Courier New" font-size="' +
-					size / 19 + '" height="' + height * 2 + '" width="' + size + '">';
+					size / (key * length) + '" height="' + height * 2 + '" width="' + size + '">';
 			let node = undefined, closeNode = undefined, tracker = 0;
 			let random = [], array = [], stack = [], star = [], label = [], cutLine = [];
 			
-			for(let index = .5; index < 19; index += 6) {
-				cutLine.push([index, .5 + Math.ceil(message.length / 3) * 6 + 2, 0, Math.ceil(message.length / 3) * 6]);
+			for(let index = .5; index < key * length + 1; index += length) {
+				cutLine.push([
+					index,
+					.5 + Math.ceil(message.length / key) * length + 2,
+					0,
+					Math.ceil(message.length / key) * length
+				]); // end of push
 			} // end of for
 			
-			for(let index = .5; index < Math.ceil(message.length / 3) * 6 + 1; index += 6) {
-				cutLine.push([.5, index + Math.ceil(message.length / 3) * 6 + 2, 18, 0]);
+
+			for(let index = .5; index < Math.ceil(message.length / key) * length + 1; index += length) {
+				cutLine.push([.5, index + Math.ceil(message.length / key) * length + 2, key * length, 0]);
 			} // end of for
 			
 			random = Array(message.length).fill(0).map((x,i) => i);
@@ -1804,12 +1813,13 @@
 			
 			for(let index = 0; index < message.length; index++) {
 				while(stack.length < message[index].length) {
-					random = [parseInt(Math.random() * 6) + (index % 3) * 6,
-						parseInt(Math.random() * 6) + parseInt(index / 3) * 6];
+					random = [parseInt(Math.random() * length) + (index % key) * length,
+						parseInt(Math.random() * length) + parseInt(index / key) * length];
 					
 					if(stack.map((x) => x.join())
-						.indexOf([random[0], random[1] + Math.ceil(message.length / 3) * 6 + 2].join()) < 0) {
-						stack.push([random[0], random[1] + Math.ceil(message.length / 3) * 6 + 2]);
+						.indexOf([random[0], random[1] + Math.ceil(message.length / key) * length + 2]
+							.join()) < 0) {
+						stack.push([random[0], random[1] + Math.ceil(message.length / key) * length + 2]);
 						star.push([random[0] + 1, random[1] + 1]);
 					} // end of if
 				} // end of while
@@ -1841,7 +1851,11 @@
 					' l' + x[2] + ' ' + x[3] + '" stroke="grey" stroke-width="2" fill="none"/>')
 				.join('');
 			label = label
-				.map((x, i) => [(i % 3) * 6 + 4, parseInt(i / 3) * 6 + Math.ceil(message.length / 3) * 6 + 6, x])
+				.map((x, i) => [
+					(i % key) * length + 4,
+					parseInt(i / key) * length + Math.ceil(message.length / key) * length + length,
+					x
+				]) // end of map
 				.map((x) => '<text x="' + x[0] * unit + '" y="' + x[1] * unit +
 					'" transform="rotate(' + (90 * parseInt(Math.random() * 4)) + ' ' +
 					x[0] * unit + ',' + x[1] * unit + ')" >' + (x[2] + 1) + '</text>')
@@ -1854,6 +1868,7 @@
 				.map((x) => '<path d="M' + x[0] + ' L' + x[1] + '" stroke="black" stroke-width="2" fill="none"/>')
 				.join(''); 
 			
+			// rasterize svg
 			svg += array + star + label + cutLine + '</svg>';
 			let canvas = document.createElement("canvas");
 			let ctx = canvas.getContext("2d");
